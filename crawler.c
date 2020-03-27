@@ -1,9 +1,8 @@
-/* A simple server in the internet domain using TCP
-The port number is passed as an argument
+#define PORTNO 80
+#define MAX_SIZE_RESPONSE 100000
+#define MAX_SIZE_URL 1000
+#define METHOD "GET"
 
-
- To compile: gcc server.c -o server
-*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,99 +12,124 @@ The port number is passed as an argument
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <netdb.h> 
 
 
 int main(int argc, char **argv)
 {
-	int sockfd, newsockfd, portno;// clilen;
-	char buffer[256];
-	struct sockaddr_in serv_addr, cli_addr;
-	socklen_t clilen;
-	int n;
-
+	
+	int portno	= PORTNO;	
+	
+	int url_size = strlen(argv[1]); 
+	char host[url_size];
+	char path[url_size];
+	sscanf(argv[1], "http://%[^/]/%[^\n]", host, path);
+	
+    struct hostent *server;
+    struct sockaddr_in serv_addr;
+    int sockfd, bytes, sent, received, total, message_size, n;
+    char *request_message, response[MAX_SIZE_RESPONSE];
+    
+    /*error no port provided*/
 	if (argc < 2)
 	{
-		fprintf(stderr,"ERROR, no port provided\n");
+		fprintf(stderr,"ERROR, no host provided\n");
 		exit(1);
 	}
+    
+/*    
+    
+  
+    struct url_component{
+    	char host[url_size];
+    	int portno = PORTNO;
+    	char path[url_size];
+    }
+    
+    sscanf(argv[1], "http://%[^:]:%99d/%[^c]", url_component.host, &url_component.port, url.path);    
+*/
 
-	 /* Create TCP socket */
+    /*Calculate message size*/
+    message_size = 0;
+    message_size += url_size;
+    message_size += strlen("GET %s HTTP/1.1\r\n");
+    message_size += strlen("Host: %s\r\n");
+    message_size += strlen("User-Agent: wintan\r\n");
+    message_size += strlen("Content-Length: 100000\r\n");
+    
+    /*Allocating space for message*/
+    request_message = malloc(message_size);
+    
+    
+    sprintf(request_message, "GET %s HTTP/1.1\r\n"
+    	"Host: %s\r\n"
+    	"User-Agent: wintan\r\n"
+    	"Content-Length: 100000\r\n",
+    	strlen(path)>0?path:"/", host);
+    
 
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    /* Translate host name into peer's IP address ;
+     * This is name translation service by the operating system
+     */
+    server = gethostbyname(host);
 
-	if (sockfd < 0)
-	{
-		perror("ERROR opening socket");
-		exit(1);
-	}
+    if (server == NULL)
+    {
+        fprintf(stderr, "ERROR, no such host\n");
+        exit(0);
+    }
+
+    /* Building data structures for socket */
+
+    bzero((char *)&serv_addr, sizeof(serv_addr));
+
+    serv_addr.sin_family = AF_INET;
+
+    bcopy(server->h_addr_list[0], (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+
+    serv_addr.sin_port = htons(portno);
+    
+    /* Create TCP socket -- active open
+    * Preliminary steps: Setup: creation of active open socket
+    */
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    if (sockfd < 0)
+    {
+        perror("ERROR opening socket");
+        exit(0);
+    }
+
+    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        perror("ERROR connecting");
+        exit(0);
+    }
+
+    /* Do processing
+    */
 
 
-	bzero((char *) &serv_addr, sizeof(serv_addr));
+    n = write(sockfd, request_message, message_size);
 
-	portno = atoi(argv[1]);
+    if (n < 0)
+    {
+        perror("ERROR writing to socket");
+        exit(0);
+    }
 
-	/* Create address we're going to listen on (given port number)
-	 - converted to network byte order & any IP address for
-	 this machine */
+    bzero(response, MAX_SIZE_RESPONSE);
 
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(portno);  // store in machine-neutral format
+    n = read(sockfd, response, MAX_SIZE_RESPONSE-1);
 
-	 /* Bind address to the socket */
+    if (n < 0)
+    {
+        perror("ERROR reading from socket");
+        exit(0);
+    }
 
-	if (bind(sockfd, (struct sockaddr *) &serv_addr,
-			sizeof(serv_addr)) < 0)
-	{
-		perror("ERROR on binding");
-		exit(1);
-	}
+    printf("%s\n", response);
 
-	/* Listen on socket - means we're ready to accept connections -
-	 incoming connection requests will be queued */
-
-	listen(sockfd,5);
-
-	clilen = sizeof(cli_addr);
-
-	/* Accept a connection - block until a connection is ready to
-	 be accepted. Get back a new file descriptor to communicate on. */
-
-	newsockfd = accept(	sockfd, (struct sockaddr *) &cli_addr,
-						&clilen);
-
-	if (newsockfd < 0)
-	{
-		perror("ERROR on accept");
-		exit(1);
-	}
-
-	bzero(buffer,256);
-
-	/* Read characters from the connection,
-		then process */
-
-	n = read(newsockfd,buffer,255);
-
-	if (n < 0)
-	{
-		perror("ERROR reading from socket");
-		exit(1);
-	}
-
-	printf("Here is the message: %s\n",buffer);
-
-	n = write(newsockfd,"I got your message",18);
-
-	if (n < 0)
-	{
-		perror("ERROR writing to socket");
-		exit(1);
-	}
-
-	/* close socket */
-
-	close(sockfd);
-
-	return 0;
+    return 0;
 }
