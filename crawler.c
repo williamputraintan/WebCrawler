@@ -14,59 +14,64 @@
 #include <unistd.h>
 #include <netdb.h> 
 
+/*function prototype*/
+void http_get_html(char* url, char *html_response);
 
 int main(int argc, char **argv)
 {
 	
-	int portno	= PORTNO;	
-	
-	int url_size = strlen(argv[1]); 
-	char host[url_size];
-	char path[url_size];
-	sscanf(argv[1], "http://%[^/]/%[^\n]", host, path);
-	
-    struct hostent *server;
-    struct sockaddr_in serv_addr;
-    int sockfd, bytes, sent, received, total, message_size, n;
-    char *request_message, response[MAX_SIZE_RESPONSE];
-    
-    /*error no port provided*/
+	/*error no port provided*/
 	if (argc < 2)
 	{
 		fprintf(stderr,"ERROR, no host provided\n");
 		exit(1);
 	}
-    
-/*    
-    
-  
-    struct url_component{
-    	char host[url_size];
-    	int portno = PORTNO;
-    	char path[url_size];
-    }
-    
-    sscanf(argv[1], "http://%[^:]:%99d/%[^c]", url_component.host, &url_component.port, url.path);    
-*/
+	
+	char html_response[MAX_SIZE_RESPONSE];
+	
+	http_get_html(argv[1], html_response);
+	
+	printf("html nya adalah:\n");
+	printf("%s", html_response);
+	
+    return 0;
+}
 
+
+void http_get_html(char* url, char *html_response){
+
+	int portno	= PORTNO;	
+
+	int url_size = strlen(url); 
+	char host[MAX_SIZE_URL] = "";
+	char path[MAX_SIZE_URL] = "";
+
+	sscanf(url, "http://%[^/]/%[^\n]", host, path);
+	
+	struct hostent *server;
+    struct sockaddr_in serv_addr;
+    int sockfd, bytes, message_size, n;
+    char *request_message;
+    
     /*Calculate message size*/
     message_size = 0;
     message_size += url_size;
-    message_size += strlen("GET %s HTTP/1.1\r\n");
+    message_size += strlen("GET /%s HTTP/1.1\r\n");
     message_size += strlen("Host: %s\r\n");
     message_size += strlen("User-Agent: wintan\r\n");
     message_size += strlen("Content-Length: 100000\r\n");
+    message_size += strlen("Content-Type: : text/html\r\n");
     
     /*Allocating space for message*/
     request_message = malloc(message_size);
     
-    
-    sprintf(request_message, "GET %s HTTP/1.1\r\n"
+    sprintf(request_message, "GET /%s HTTP/1.1	\r\n"
     	"Host: %s\r\n"
     	"User-Agent: wintan\r\n"
-    	"Content-Length: 100000\r\n",
-    	strlen(path)>0?path:"/", host);
-    
+  //  	"Content-Length: 100000\r\n"
+    	"Content-Type: : text/html\r\n\r\n",
+    	path, host);
+    printf("\n%s\n", request_message);
 
     /* Translate host name into peer's IP address ;
      * This is name translation service by the operating system
@@ -100,36 +105,32 @@ int main(int argc, char **argv)
         perror("ERROR opening socket");
         exit(0);
     }
-
     if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
         perror("ERROR connecting");
         exit(0);
     }
 
+
     /* Do processing
     */
 
-
     n = write(sockfd, request_message, message_size);
-
     if (n < 0)
     {
         perror("ERROR writing to socket");
         exit(0);
     }
 
-    bzero(response, MAX_SIZE_RESPONSE);
-
-    n = read(sockfd, response, MAX_SIZE_RESPONSE-1);
+    bzero(html_response, MAX_SIZE_RESPONSE);
+    n = read(sockfd, html_response, MAX_SIZE_RESPONSE-1);
 
     if (n < 0)
     {
         perror("ERROR reading from socket");
         exit(0);
     }
-
-    printf("%s\n", response);
-
-    return 0;
+	
+    free(request_message);
+	
 }
