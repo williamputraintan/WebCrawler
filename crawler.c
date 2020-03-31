@@ -31,6 +31,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	
+	//intialize
 	char html_response[MAX_SIZE_RESPONSE+1];
 	int init_url_size = strlen(argv[1]);
 	//copying host and path to a string
@@ -44,18 +45,18 @@ int main(int argc, char **argv)
 	
 	printf("html nya adalah:\n");
 	printf("%s", html_response);
-	
+/*	
 	char *url_copy = malloc(sizeof(char));
 	
 	if( find_url(html_response, url_copy) == 0){
 		printf("no links found\n");
 		return 0;
 	}
-	
-	
+	free(url_copy);
+*/	
 	free(host);
 	free(path);
-	free(url_copy);
+	
     return 0;
 }
 
@@ -87,7 +88,7 @@ void http_get_html(char *html_response, char *host, char *path){
     /*Allocating space for message*/
     request_message = malloc(message_size);
     
-    sprintf(request_message, "GET /%s HTTP/1.1	\r\n"
+    sprintf(request_message, "GET /%s HTTP/1.1\r\n"
     	"Host: %s\r\n"
     	"User-Agent: wintan\r\n"
     	"Content-Length: 100000\r\n"
