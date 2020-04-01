@@ -1,5 +1,5 @@
 #define PORTNO 80
-#define MAX_SIZE_RESPONSE 100000
+#define MAX_SIZE_RESPONSE 100001
 #define MAX_SIZE_URL 1000
 #define METHOD "GET"
 #define FALSE 0
@@ -14,7 +14,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <netdb.h> 
+#include <netdb.h>
 #include <assert.h>
 
 /*function prototype*/
@@ -45,15 +45,16 @@ int main(int argc, char **argv)
 	
 	printf("html nya adalah:\n");
 	printf("%s", html_response);
-/*	
+	/*
 	char *url_copy = malloc(sizeof(char));
 	
 	if( find_url(html_response, url_copy) == 0){
 		printf("no links found\n");
 		return 0;
 	}
-	free(url_copy);
-*/	
+	free(url_copy);	
+	
+	*/
 	free(host);
 	free(path);
 	
@@ -63,16 +64,14 @@ int main(int argc, char **argv)
 
 
 /*
-Will get HTML code from the URL given and copy to the html_response string.
-This function is taken and has been modified from :
-https://cdn.inst-fs-syd-prod.inscloudgate.net/a12dd2ad-618d-4fb4-86c2-77bb7dd01924/client.c?token=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCIsImtpZCI6ImNkbiJ9.eyJyZXNvdXJjZSI6Ii9hMTJkZDJhZC02MThkLTRmYjQtODZjMi03N2JiN2RkMDE5MjQvY2xpZW50LmMiLCJ0ZW5hbnQiOiJjYW52YXMiLCJ1c2VyX2lkIjoiMTQyMjcwMDAwMDAwMDEzMjQ4IiwiaWF0IjoxNTg1NTM4NTE0LCJleHAiOjE1ODU2MjQ5MTR9.0x-LDGk7V9JekYj_iGKQpP7hDQvQAnLyymFuV5yYDBabykrmQTctz9lsVRbYIPQH2sjY1k7T14djWdDYcFNH8Q&content_type=text%2Fx-csrc
+The function will get HTML code from the URL given and copy to the html_response string.
 */
 void http_get_html(char *html_response, char *host, char *path){
 
 	int portno	= PORTNO;		
 	struct hostent *server;
     struct sockaddr_in serv_addr;
-    int sockfd, bytes, message_size, n;
+    int sockfd, bytes, message_size, total, received,sent;
     char *request_message;
     
     /*Calculate message size*/
@@ -82,16 +81,14 @@ void http_get_html(char *html_response, char *host, char *path){
     message_size += strlen("GET /%s HTTP/1.1\r\n");
     message_size += strlen("Host: %s\r\n");
     message_size += strlen("User-Agent: wintan\r\n");
-    message_size += strlen("Content-Length: 100000\r\n");
     message_size += strlen("Content-Type: text/html; charset=UTF-8\r\n\r\n");
     
     /*Allocating space for message*/
-    request_message = malloc(message_size);
+    request_message = malloc(sizeof(char)*message_size);
     
     sprintf(request_message, "GET /%s HTTP/1.1\r\n"
     	"Host: %s\r\n"
     	"User-Agent: wintan\r\n"
-    	"Content-Length: 100000\r\n"
     	"Content-Type: text/html; charset=UTF-8\r\n\r\n",
     	path, host);
     printf("\n%s\n", request_message);
@@ -130,21 +127,47 @@ void http_get_html(char *html_response, char *host, char *path){
 
 
     /* Do processing */
-    n = write(sockfd, request_message, message_size);
-    if (n < 0)
-    {
-        perror("ERROR writing to socket");
-        exit(0);
-    }
+
+    /* send the request */
+    total = strlen(request_message);
+    sent = 0;
+    do {
+        bytes = write(sockfd, request_message+sent, total-sent);
+        if (bytes < 0){
+			perror("ERROR writing to socket");
+			exit(0);
+		}
+        if (bytes == 0){
+            break;
+        }
+        sent+=bytes;
+    } while (sent < total);
 
     bzero(html_response, MAX_SIZE_RESPONSE);
-    n = read(sockfd, html_response, MAX_SIZE_RESPONSE-1);
-    if (n < 0)
-    {
-        perror("ERROR reading from socket");
-        exit(0);
+    
+    /* receive the response */
+    total = MAX_SIZE_RESPONSE-1;
+    received = 0;
+    do { 	
+        bytes = read(sockfd,html_response+received,total-received);
+        if (bytes < 0){
+			perror("ERROR reading from socket");
+			exit(0);
+		}
+        if (bytes == 0){
+            break;
+        }
+        received+=bytes;
+    } while (received < total);
+    
+    if (received == total){
+        perror("ERROR storing complete response from socket");
+    	exit(0);	
     }
-	
+
+    /* close the socket */
+    close(sockfd);
+    
     free(request_message);
 	
 }
@@ -167,7 +190,6 @@ int find_url(char *html_response, char*url)
 		//checking if its hyperlink tag
 		if (html_response[i] == '<' && html_response[i+1] == 'a'){
 			start_tag = i;
-			continue;
 		}
 		
 		//checking for closing tag
@@ -176,6 +198,9 @@ int find_url(char *html_response, char*url)
             
 			//copy the tag that contain a link
             int tag_size = (end_tag-start_tag);
+            printf("\nstart = %d\n", start_tag);
+            printf("\nend = %d\n", end_tag);
+            printf("\n%d\n", tag_size);
 			html_tag = malloc(sizeof(char)*tag_size);
             assert(html_tag);
 			slice_str(html_response, html_tag, start_tag, end_tag);
