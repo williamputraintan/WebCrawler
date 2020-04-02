@@ -1,11 +1,12 @@
 #define PORTNO 80
-#define MAX_SIZE_RESPONSE 100001
-#define MAX_SIZE_URL 1000
+#define MAX_SIZE_RESPONSE 100001	//including null byte
+#define MAX_SIZE_URL 1001 			//including null byte
 #define METHOD "GET"
 #define FALSE 0
 #define MAX_NUM_FETCHES 100
 
 /*Include files*/
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,10 +17,10 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <assert.h>
+#include <ctype.h>
 
 /*function prototype*/
 void http_get_html(char *html_response, char *host, char *path);
-void slice_str(const char * str, char * buffer, size_t start, size_t end);
 int find_url(char *html_response, char*url);
 
 /*Main Function of the program*/
@@ -45,16 +46,17 @@ int main(int argc, char **argv)
 	
 	printf("html nya adalah:\n");
 	printf("%s", html_response);
-	/*
+
 	char *url_copy = malloc(sizeof(char));
 	
 	if( find_url(html_response, url_copy) == 0){
 		printf("no links found\n");
 		return 0;
 	}
+	printf("\nurl prtama = %s\n", url_copy);
 	free(url_copy);	
-	
-	*/
+
+
 	free(host);
 	free(path);
 	
@@ -178,7 +180,8 @@ Will return FALSE otherwise.
 */
 int find_url(char *html_response, char*url)
 {
-	int start_tag, end_tag;
+	int start_tag;
+	int is_an_a_tag = 0;
 	char *html_tag;
 
 	for(int i = 0; i < strlen(html_response)-1; i++){
@@ -188,26 +191,20 @@ int find_url(char *html_response, char*url)
 		}
 	
 		//checking if its hyperlink tag
-		if (html_response[i] == '<' && html_response[i+1] == 'a'){
+		if (html_response[i] == '<' && tolower(html_response[i+1]) == 'a'){
 			start_tag = i;
+			is_an_a_tag = 1;
 		}
 		
-		//checking for closing tag
-		if (html_response[i] == '>'){
-			end_tag = i;
+		//checking if it is an a tag
+		if (is_an_a_tag == 1){
             
-			//copy the tag that contain a link
-            int tag_size = (end_tag-start_tag);
-            printf("\nstart = %d\n", start_tag);
-            printf("\nend = %d\n", end_tag);
-            printf("\n%d\n", tag_size);
-			html_tag = malloc(sizeof(char)*tag_size);
-            assert(html_tag);
-			slice_str(html_response, html_tag, start_tag, end_tag);
+			//indicate where the <a> tag is 
+            html_tag = &html_response[start_tag];
 			
 			//check where the href tag begins
 			char *href_tag;
-			href_tag = strstr(html_tag, "href");
+			href_tag = strcasestr(html_tag, "href");
 			if(href_tag == NULL){
 				continue;
 			}
@@ -224,28 +221,11 @@ int find_url(char *html_response, char*url)
 			url = realloc(url, sizeof(char)*url_size);
             assert(url);
 			sscanf(href_link, "\"%[^\"]\"", url); 
-
-            free(html_tag);
-			return 1;
 			
+			is_an_a_tag = 0;
+			return 1;
 		}
 	}	
     return FALSE;
 }
 
-
-
-
-/* 
-This function will slice a string and copy to its buffer.
-The function is taken from :
-https://stackoverflow.com/questions/26620388/c-substrings-c-string-slicing
-*/
-void slice_str(const char * str, char * buffer, size_t start, size_t end)
-{
-    size_t j = 0;
-    for ( size_t i = start; i <= end; ++i ) {
-        buffer[j++] = str[i];
-    }
-    buffer[j] = 0;
-};
