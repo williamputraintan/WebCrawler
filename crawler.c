@@ -1,9 +1,9 @@
-#define PORTNO 80
-#define MAX_SIZE_RESPONSE 100001	//including null byte
-#define MAX_SIZE_URL 1001 			//including null byte
-#define METHOD "GET"
-#define FALSE 0
-#define MAX_NUM_FETCHES 100
+#define PORTNO 				80
+#define MAX_SIZE_RESPONSE 	100001	//including null byte
+#define FALSE 				0
+#define MAX_NUM_FETCHES 	100
+#define NOT_ACCEPTABLE 		0
+#define RELATIVE_URL		2
 
 /*Include files*/
 #define _GNU_SOURCE
@@ -21,7 +21,9 @@
 
 /*function prototype*/
 void http_get_html(char *html_response, char *host, char *path);
-int find_url(char *html_response, char*url);
+void find_url(char *html_response, char*second_current_host_component, char **url_list, int *url_count);
+int add_new_url(char *new_url, char *url_list[100], int*url_count);
+int is_acceptable_url(char *second_host_component, char *url);
 
 /*Main Function of the program*/
 int main(int argc, char **argv)
@@ -31,34 +33,45 @@ int main(int argc, char **argv)
 		fprintf(stderr,"ERROR, no URL provided\n");
 		exit(1);
 	}
-	
+
 	//intialize
+	char *url_list[MAX_NUM_FETCHES];
+	int url_count = 0;
+	
 	char html_response[MAX_SIZE_RESPONSE+1];
 	int init_url_size = strlen(argv[1]);
+	
+	
 	//copying host and path to a string
-	char *host=malloc(sizeof(char)*init_url_size);
-	char *path=malloc(sizeof(char)*init_url_size);
-	sscanf(argv[1], "http://%[^/]/%[^\n]", host, path);
+	char *current_host=malloc(sizeof(char)*init_url_size);
+	char *current_path=malloc(sizeof(char)*init_url_size);
+	sscanf(argv[1], "http://%[^/]/%[^\n]", current_host, current_path);
 	
-	
+
 	//getting a html response from host and path
-	http_get_html(html_response, host, path);
+	http_get_html(html_response, current_host, current_path);
 	
-	printf("html nya adalah:\n");
-	printf("%s", html_response);
 
-	char *url_copy = malloc(sizeof(char));
 	
-	if( find_url(html_response, url_copy) == 0){
-		printf("no links found\n");
-		return 0;
+//	printf("html nya adalah:\n");
+//	printf("%s", html_response);
+
+
+	find_url(html_response, current_host, url_list, &url_count);
+
+	
+	printf("url prtama = %d", url_count);
+
+	free(current_host);
+	free(current_path);
+	
+	printf("\n\n\nKONKLUSI\n\n\n");
+	
+	//free memory allocated
+	for (int i = 0; i < url_count; i++){
+		printf("%s\n", url_list[i]);
+		free(url_list[i]);
 	}
-	printf("\nurl prtama = %s\n", url_copy);
-	free(url_copy);	
-
-
-	free(host);
-	free(path);
 	
     return 0;
 }
@@ -175,21 +188,31 @@ void http_get_html(char *html_response, char *host, char *path){
 }
 
 /*
-The function will copy the first link found in the HTML to a string called url.
-Will return FALSE otherwise.
+The function will copy the all available valid link and copy it to the list.
+
 */
-int find_url(char *html_response, char*url)
+void find_url(char *html_response, char*current_host,char *url_list[100],  int *url_count)
 {
-	int start_tag;
+	int host_size = strlen(current_host);
+//	char first_current_host_component = malloc(sizeof(char)*host_size);
+//	char second_current_host_component = malloc(sizeof(char)*host_size);
+	
+	char *second_current_host_component = strchr(current_host, '.')+1;
+	
+	//finding the length of the first component excluding " . "
+	int length_first_comp = second_current_host_component - current_host -1;
+
+	printf("2 = %d\n", length_first_comp);
+	int start_tag, end_tag;
 	int is_an_a_tag = 0;
 	char *html_tag;
-
+	char *url = malloc(sizeof(char));
 	for(int i = 0; i < strlen(html_response)-1; i++){
 		//skip index if its not a opening/closing tag
 		if (html_response[i] != '<' && html_response[i] != '>'){
 			continue;
 		}
-	
+		
 		//checking if its hyperlink tag
 		if (html_response[i] == '<' && tolower(html_response[i+1]) == 'a'){
 			start_tag = i;
@@ -200,32 +223,121 @@ int find_url(char *html_response, char*url)
 		if (is_an_a_tag == 1){
             
 			//indicate where the <a> tag is 
-            html_tag = &html_response[start_tag];
+			html_tag = &html_response[start_tag];
 			
 			//check where the href tag begins
 			char *href_tag;
 			href_tag = strcasestr(html_tag, "href");
 			if(href_tag == NULL){
+				is_an_a_tag = 0;
 				continue;
 			}
+			
             //check where the link starts
             //this anticipate if there are spaces between " = "
-			char *href_link;
-			href_link = strchr(href_tag, '"');
-			if(href_link == NULL){
+			char *href_link_start;
+			href_link_start = strchr(href_tag, '"');
+			if(href_link_start == NULL){
+				is_an_a_tag = 0;
 				continue;
 			}
+			
+			//identify size of url
+			char *href_link_end;
+			href_link_end = strchr(href_link_start+1, '"');
+            int url_size =href_link_end - href_link_start;
             
 			//Copying the link to the string
-			int url_size = strlen(href_link);
 			url = realloc(url, sizeof(char)*url_size);
-            assert(url);
-			sscanf(href_link, "\"%[^\"]\"", url); 
+			assert(url);
+			sscanf(href_link_start, "\"%[^\"]\"", url); 
 			
-			is_an_a_tag = 0;
-			return 1;
-		}
-	}	
-    return FALSE;
-}
+//			printf("2nd host = %s\n", second_current_host_component);
+//			printf("url = %s\n", url);
+			
+			//checking if it acceptable host
+			int url_type = is_acceptable_url(second_current_host_component, url);
+			
+//			printf("test_type = %d\n\n", url_type);
+			if ( url_type == NOT_ACCEPTABLE){
+				is_an_a_tag = 0;
+				continue;
+			} else if ( url_type == RELATIVE_URL){
+				char *temp = url;
+				int absolute_url_size =0;
+				absolute_url_size += host_size;
+				absolute_url_size += url_size;
+				url = realloc(url, sizeof(char) * absolute_url_size);
+				assert(url);
+				strcpy(url, current_host);
+				strcat(url, temp);
+				
+			}
+//			NEED SOME EDIT HERE
+		
+			add_new_url(url, url_list, url_count);
 
+			is_an_a_tag = 0;
+
+		}
+	}
+	free(url);
+}
+/*
+Will check if the new url have the same 2nd component host as the original.
+returns 0 - Not acceptable
+		1 - match with the original host
+		2 - relative URL
+*/
+int is_acceptable_url(char *second_host_component, char *url){
+    char *new_host_start, *new_host_end;
+    int size_new_host;
+    new_host_start = strchr(url, '.'); //inluding dots
+    
+    /*return if it is a relative URL*/
+    if (new_host_start == NULL){
+        return 2;
+    }
+    new_host_start += 1;			//move pointer forward to remove " . "
+    
+    /*check if url dont have any path*/
+    new_host_end = strchr(new_host_start + 1, '/');
+    if (new_host_end == NULL){
+    	size_new_host = strlen(new_host_start);
+    } else {
+    	size_new_host = new_host_end - new_host_start;
+    }
+
+    char *new_url_host = malloc(sizeof(char) * (size_new_host+1));
+    
+    strncpy(new_url_host, new_host_start, size_new_host);
+    
+    if (strcmp(second_host_component, new_url_host) == 0){
+        free(new_url_host);
+        return 1;
+    }
+    
+    free(new_url_host);
+    return 0;
+}	
+/*
+the function will add new_url to the url_list if it does not exist in the list.
+Return: 0 - nothing is added
+		1 - url is added
+*/
+int add_new_url(char *new_url, char *url_list[100], int*url_count){
+	
+	//check if the url are already inside the list
+	for (int i = 0; i < *url_count; i++){
+		if( strcmp(url_list[i], new_url) == 0){
+			return 0;
+		}
+	}
+	
+	//allocating new memory and add the url to the list
+	int size_url = strlen(new_url)+1;
+	url_list[*url_count] = malloc(sizeof(char)*size_url);
+	strcpy(url_list[*url_count], new_url);
+	*url_count +=1;
+	return 1;
+}
