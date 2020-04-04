@@ -21,9 +21,11 @@
 
 /*function prototype*/
 void http_get_html(char *html_response, char *host, char *path);
-void find_url(char *html_response, char*second_current_host_component, char **url_list, int *url_count);
+void find_url(char *html_response, char*current_host, char *path, char *url_list[101],  int *url_count);
 int add_new_url(char *new_url, char *url_list[100], int*url_count);
-int is_acceptable_url(char *second_host_component, char *url);
+int find_url_type(char *url);
+int is_eligible_url(char * current_host, char * url);
+
 
 /*Main Function of the program*/
 int main(int argc, char **argv)
@@ -57,7 +59,7 @@ int main(int argc, char **argv)
 //	printf("%s", html_response);
 
 
-	find_url(html_response, current_host, url_list, &url_count);
+	find_url(html_response, current_host, current_path, url_list, &url_count);
 
 	
 	printf("url prtama = %d", url_count);
@@ -191,18 +193,15 @@ void http_get_html(char *html_response, char *host, char *path){
 The function will copy the all available valid link and copy it to the list.
 
 */
-void find_url(char *html_response, char*current_host,char *url_list[100],  int *url_count)
+void find_url(char *html_response, char*current_host, char *current_path,	\
+	char *url_list[100],  int *url_count)
 {
 	int host_size = strlen(current_host);
-//	char first_current_host_component = malloc(sizeof(char)*host_size);
-//	char second_current_host_component = malloc(sizeof(char)*host_size);
+	int path_size = strlen(current_path);
+	char protocol[]="http://";
 	
 	char *second_current_host_component = strchr(current_host, '.')+1;
 	
-	//finding the length of the first component excluding " . "
-	int length_first_comp = second_current_host_component - current_host -1;
-
-	printf("2 = %d\n", length_first_comp);
 	int start_tag, end_tag;
 	int is_an_a_tag = 0;
 	char *html_tag;
@@ -252,31 +251,55 @@ void find_url(char *html_response, char*current_host,char *url_list[100],  int *
 			assert(url);
 			sscanf(href_link_start, "\"%[^\"]\"", url); 
 			
-//			printf("2nd host = %s\n", second_current_host_component);
-//			printf("url = %s\n", url);
-			
 			//checking if it acceptable host
-			int url_type = is_acceptable_url(second_current_host_component, url);
+			int url_type = find_url_type(url);
 			
-//			printf("test_type = %d\n\n", url_type);
-			if ( url_type == NOT_ACCEPTABLE){
-				is_an_a_tag = 0;
-				continue;
-			} else if ( url_type == RELATIVE_URL){
-				char *temp = url;
-				int absolute_url_size =0;
-				absolute_url_size += host_size;
-				absolute_url_size += url_size;
-				url = realloc(url, sizeof(char) * absolute_url_size);
-				assert(url);
-				strcpy(url, current_host);
-				strcat(url, temp);
+			printf("test_type = %d\n\n", url_type);
+			
+			
+			if (url_type == 1) {
 				
+				int new_url_size = url_size + strlen(protocol);
+				
+				char * temp = malloc(url_size*sizeof(char));
+				strcpy(temp, url);
+				
+				url = realloc(url, sizeof(char)*new_url_size);
+				bzero(url, new_url_size);
+				strcat(url, protocol);
+				strcat(url, temp);
+				free(temp);
+			} else if (url_type == 2) {
+				int new_url_size = url_size + strlen(protocol) + host_size;
+				
+				char * temp = malloc(url_size*sizeof(char));
+				strcpy(temp, url);
+				
+				url = realloc(url, sizeof(char)*new_url_size);
+				bzero(url, new_url_size);
+				strcat(url, protocol);
+				strcat(url, current_host);
+				strcat(url, temp);
+				free(temp);
+			} else if (url_type == 3) {
+				int new_url_size = url_size + strlen(protocol) + host_size + path_size;
+				
+				char * temp = malloc(url_size*sizeof(char));
+				strcpy(temp, url);
+				
+				url = realloc(url, sizeof(char)*new_url_size);
+				bzero(url, new_url_size);
+				strcat(url, protocol);
+				strcat(url, current_host);
+				strcat(url, current_path);
+				strcat(url, temp);
+				free(temp);
 			}
-//			NEED SOME EDIT HERE
-		
-			add_new_url(url, url_list, url_count);
-
+			
+			if (is_eligible_url(current_host, url) == 1){
+				add_new_url(url, url_list, url_count);
+			}
+			
 			is_an_a_tag = 0;
 
 		}
@@ -284,42 +307,41 @@ void find_url(char *html_response, char*current_host,char *url_list[100],  int *
 	free(url);
 }
 /*
-Will check if the new url have the same 2nd component host as the original.
-returns 0 - Not acceptable
-		1 - match with the original host
-		2 - relative URL
+Will return the URL type.
+returns 0 - Absolute URL
+		1 - Relative URL (implied protocol)
+		2 - Relative URL (implied protocol + host)
+		3 - Relative URL (implied protocol + host + path)
 */
-int is_acceptable_url(char *second_host_component, char *url){
-    char *new_host_start, *new_host_end;
-    int size_new_host;
-    new_host_start = strchr(url, '.'); //inluding dots
+int find_url_type(char *url){
+    char *new_host_start;
     
-    /*return if it is a relative URL*/
-    if (new_host_start == NULL){
-        return 2;
+    //Checking if Absolute URL
+    //Check if the URL starts with " http: "
+    new_host_start = strstr(url, "http:");
+    if(new_host_start - url == 0 ){
+    	return 0;
     }
-    new_host_start += 1;			//move pointer forward to remove " . "
     
-    /*check if url dont have any path*/
-    new_host_end = strchr(new_host_start + 1, '/');
-    if (new_host_end == NULL){
-    	size_new_host = strlen(new_host_start);
-    } else {
-    	size_new_host = new_host_end - new_host_start;
+    //Checking if Relative (implied protocol)
+    //Check if the URL starts with " // "
+    new_host_start = strstr(url, "//");
+    if(new_host_start - url == 0 ){
+    	return 1;
     }
+    
+    //Checking if Relative (implied host+protocol)
+    //Check if the URL starts with ' / '
+    new_host_start = strchr(url, '/');
+    if(new_host_start - url == 0 ){
+    	return 2;
+    }
+    
+    //Relative URL (implied host + protocol + directory)
+    return 3; 
+    
+}
 
-    char *new_url_host = malloc(sizeof(char) * (size_new_host+1));
-    
-    strncpy(new_url_host, new_host_start, size_new_host);
-    
-    if (strcmp(second_host_component, new_url_host) == 0){
-        free(new_url_host);
-        return 1;
-    }
-    
-    free(new_url_host);
-    return 0;
-}	
 /*
 the function will add new_url to the url_list if it does not exist in the list.
 Return: 0 - nothing is added
@@ -341,3 +363,19 @@ int add_new_url(char *new_url, char *url_list[100], int*url_count){
 	*url_count +=1;
 	return 1;
 }
+
+int is_eligible_url(char * current_host, char * url){
+    //Will assign the variable below to point after the first " . "
+	char *component_cur_host = strchr(current_host, '.') + 1;
+	char *component_new_host = strchr(url, '.') + 1;
+	
+	int size_host_compare = strlen(component_cur_host);
+	
+	if (strncmp(component_cur_host, component_new_host, size_host_compare) == 0)
+	{
+		return 1;
+	}
+    
+    return 0;
+}	
+	
