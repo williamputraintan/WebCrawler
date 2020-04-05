@@ -397,3 +397,4 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 	free(current_path);
 
 }
+
