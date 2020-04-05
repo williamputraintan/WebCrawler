@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 		free(url_list[i]);
 	}
 	
-    return 0;
+	return 0;
 }
 
 
@@ -72,105 +72,105 @@ void http_get_html(char *html_response, char *host, char *path){
 
 	int portno	= PORTNO;		
 	struct hostent *server;
-    struct sockaddr_in serv_addr;
-    int sockfd, bytes, message_size, total, received,sent;
-    char *request_message;
-    
-    /*Calculate message size*/
-    message_size = 0;
-    message_size += strlen(host);
-    message_size += strlen(path);
-    message_size += strlen("GET /%s HTTP/1.1\r\n");
-    message_size += strlen("Host: %s\r\n");
-    message_size += strlen("User-Agent: wintan\r\n");
-    message_size += strlen("Content-Type: text/html; charset=UTF-8\r\n\r\n");
-    
-    /*Allocating space for message*/
-    request_message = malloc(sizeof(char)*message_size);
-    
-    sprintf(request_message, "GET /%s HTTP/1.1\r\n"
-    	"Host: %s\r\n"
-    	"User-Agent: wintan\r\n"
-    	"Content-Type: text/html; charset=UTF-8\r\n\r\n",
-    	path, host);
+	struct sockaddr_in serv_addr;
+	int sockfd, bytes, message_size, total, received,sent;
+	char *request_message;
+	
+	/*Calculate message size*/
+	message_size = 0;
+	message_size += strlen(host);
+	message_size += strlen(path);
+	message_size += strlen("GET /%s HTTP/1.1\r\n");
+	message_size += strlen("Host: %s\r\n");
+	message_size += strlen("User-Agent: wintan\r\n");
+	message_size += strlen("Content-Type: text/html; charset=UTF-8\r\n\r\n");
+	
+	/*Allocating space for message*/
+	request_message = malloc(sizeof(char)*message_size);
+	
+	sprintf(request_message, "GET /%s HTTP/1.1\r\n"
+		"Host: %s\r\n"
+		"User-Agent: wintan\r\n"
+		"Content-Type: text/html; charset=UTF-8\r\n\r\n",
+		path, host);
 //    printf("\n%s\n", request_message);
 
-    /* Translate host name into peer's IP address ;
-     * This is name translation service by the operating system
-     */
-    server = gethostbyname(host);
-    if (server == NULL)
-    {
-        fprintf(stderr, "ERROR, no such host\n");
-        exit(0);
-    }
+	/* Translate host name into peer's IP address ;
+	 * This is name translation service by the operating system
+	 */
+	server = gethostbyname(host);
+	if (server == NULL)
+	{
+		fprintf(stderr, "ERROR, no such host\n");
+		exit(0);
+	}
 
-    /* Building data structures for socket */
+	/* Building data structures for socket */
 
-    bzero((char *)&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    bcopy(server->h_addr_list[0], (char *)&serv_addr.sin_addr.s_addr, server->h_length);
-    serv_addr.sin_port = htons(portno);
-    
-    /* Create TCP socket -- active open
-    * Preliminary steps: Setup: creation of active open socket
-    */
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-    {
-        perror("ERROR opening socket");
-        exit(0);
-    }
-    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
-        perror("ERROR connecting");
-        exit(0);
-    }
+	bzero((char *)&serv_addr, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+	bcopy(server->h_addr_list[0], (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+	serv_addr.sin_port = htons(portno);
+	
+	/* Create TCP socket -- active open
+	* Preliminary steps: Setup: creation of active open socket
+	*/
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0)
+	{
+		perror("ERROR opening socket");
+		exit(0);
+	}
+	if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+	{
+		perror("ERROR connecting");
+		exit(0);
+	}
 
 
-    /* Do processing */
+	/* Do processing */
 
-    /* send the request */
-    total = strlen(request_message);
-    sent = 0;
-    do {
-        bytes = write(sockfd, request_message+sent, total-sent);
-        if (bytes < 0){
+	/* send the request */
+	total = strlen(request_message);
+	sent = 0;
+	do {
+		bytes = write(sockfd, request_message+sent, total-sent);
+		if (bytes < 0){
 			perror("ERROR writing to socket");
 			exit(0);
 		}
-        if (bytes == 0){
-            break;
-        }
-        sent+=bytes;
-    } while (sent < total);
+		if (bytes == 0){
+			break;
+		}
+		sent+=bytes;
+	} while (sent < total);
 
-    bzero(html_response, MAX_SIZE_RESPONSE);
-    
-    /* receive the response */
-    total = MAX_SIZE_RESPONSE-1;
-    received = 0;
-    do { 	
-        bytes = read(sockfd,html_response+received,total-received);
-        if (bytes < 0){
+	bzero(html_response, MAX_SIZE_RESPONSE);
+	
+	/* receive the response */
+	total = MAX_SIZE_RESPONSE-1;
+	received = 0;
+	do { 	
+		bytes = read(sockfd,html_response+received,total-received);
+		if (bytes < 0){
 			perror("ERROR reading from socket");
 			exit(0);
 		}
-        if (bytes == 0){
-            break;
-        }
-        received+=bytes;
-    } while (received < total);
-    
-    if (received == total){
-        perror("ERROR storing complete response from socket");
-    	exit(0);	
-    }
+		if (bytes == 0){
+			break;
+		}
+		received+=bytes;
+	} while (received < total);
+	
+	if (received == total){
+		perror("ERROR storing complete response from socket");
+		exit(0);	
+	}
 
-    /* close the socket */
-    close(sockfd);
-    
-    free(request_message);
+	/* close the socket */
+	close(sockfd);
+	
+	free(request_message);
 	
 }
 
@@ -205,7 +205,7 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 		
 		//checking if it is an a tag
 		if (is_an_a_tag == 1){
-            
+			
 			//indicate where the <a> tag is 
 			html_tag = &html_response[start_tag];
 			
@@ -217,8 +217,8 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 				continue;
 			}
 			
-            //check where the link starts
-            //this anticipate if there are spaces between " = "
+			//check where the link starts
+			//this anticipate if there are spaces between " = "
 			char *href_link_start;
 			href_link_start = strchr(href_tag, '"');
 			if(href_link_start == NULL){
@@ -229,8 +229,8 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 			//identify size of url	
 			char *href_link_end;
 			href_link_end = strchr(href_link_start+1, '"');
-            int url_size =href_link_end - href_link_start + 1;
-            
+			int url_size =href_link_end - href_link_start + 1;
+			
 			//Copying the link to the string
 			url = realloc(url, sizeof(char)*url_size);
 			assert(url);
@@ -303,34 +303,34 @@ returns 0 - Absolute URL
 		3 - Relative URL (implied protocol + host + path)
 */
 int find_url_type(char *url){
-    char *new_host_start;
-    
+	char *new_host_start;
+	
 //    printf("URL error = %s\n", url);	
-    
-    //Checking if Absolute URL
-    //Check if the URL starts with " http: "
-    new_host_start = strstr(url, "http:");
-    if(new_host_start != NULL && (new_host_start - url) == 0 ){
-    	return 0;
-    }
-    
-    //Checking if Relative (implied protocol)
-    //Check if the URL starts with " // "
-    new_host_start = strstr(url, "//");
-    if(new_host_start != NULL && (new_host_start - url) == 0 ){
-    	return 1;
-    }
-    
-    //Checking if Relative (implied host+protocol)
-    //Check if the URL starts with ' / '
-    new_host_start = strchr(url, '/');
-    if(new_host_start != NULL && (new_host_start - url) == 0 ){
-    	return 2;
-    }
-    
-    //Relative URL (implied host + protocol + directory)
-    return 3; 
-    
+	
+	//Checking if Absolute URL
+	//Check if the URL starts with " http: "
+	new_host_start = strstr(url, "http:");
+	if(new_host_start != NULL && (new_host_start - url) == 0 ){
+		return 0;
+	}
+	
+	//Checking if Relative (implied protocol)
+	//Check if the URL starts with " // "
+	new_host_start = strstr(url, "//");
+	if(new_host_start != NULL && (new_host_start - url) == 0 ){
+		return 1;
+	}
+	
+	//Checking if Relative (implied host+protocol)
+	//Check if the URL starts with ' / '
+	new_host_start = strchr(url, '/');
+	if(new_host_start != NULL && (new_host_start - url) == 0 ){
+		return 2;
+	}
+	
+	//Relative URL (implied host + protocol + directory)
+	return 3; 
+	
 }
 
 /*
@@ -360,7 +360,7 @@ The function will check if the url will check if the url have the same
 second component host. Will return 1 if its the same and 0 otherwise.
 */
 int is_eligible_url(char * current_host, char * url){
-    //Will assign the variable below to point after the first " . "
+	//Will assign the variable below to point after the first " . "
 	char *component_cur_host = strchr(current_host, '.') + 1;
 	char *component_new_host = strchr(url, '.') + 1;
 	
@@ -370,8 +370,8 @@ int is_eligible_url(char * current_host, char * url){
 	{
 		return 1;
 	}
-    
-    return 0;
+	
+	return 0;
 }	
 
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
