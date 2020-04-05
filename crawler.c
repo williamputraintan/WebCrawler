@@ -2,7 +2,7 @@
 #define MAX_SIZE_RESPONSE 	100001	//including null byte
 #define TRUE				1
 #define FALSE 				0
-#define MAX_NUM_FETCHES 	100		
+#define MAX_NUM_URL			100		
 #define NOT_ACCEPTABLE 		0
 
 /*Include files*/
@@ -21,11 +21,11 @@
 
 /*function prototype*/
 void http_get_html(char *html_response, char *host, char *path);
-void find_url(char *html_response, char*current_host, char *path, char *url_list[MAX_NUM_FETCHES],  int *url_count);
-int add_new_url(char *new_url, char *url_list[MAX_NUM_FETCHES], int*url_count);
+void find_url(char *html_response, char*current_host, char *path, char *url_list[MAX_NUM_URL],  int *url_count);
+int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count);
 int find_url_type(char *url);
 int is_eligible_url(char * current_host, char * url);
-void add_hyperlink_from_url(char *url_list[MAX_NUM_FETCHES], int *url_count, char* url);
+void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
 
 
 /*Main Function of the program*/
@@ -38,17 +38,17 @@ int main(int argc, char **argv)
 	}
 
 	//intialize
-	char *url_list[MAX_NUM_FETCHES];
+	char *url_list[MAX_NUM_URL];
 	int url_count = 0;
 	char *curr_url = argv[1];
 	add_new_url(curr_url, url_list, &url_count);
 	
-	for(int i = 0; i<3 ; i++){
+	for(int i = 0; i< url_count; i++){
 		curr_url = url_list[i];
 		
 		add_hyperlink_from_url(url_list, &url_count, curr_url);
 		
-		if (url_count == 100){
+		if (url_count >= MAX_NUM_URL){
 			break;
 		}
 		
@@ -93,7 +93,7 @@ void http_get_html(char *html_response, char *host, char *path){
     	"User-Agent: wintan\r\n"
     	"Content-Type: text/html; charset=UTF-8\r\n\r\n",
     	path, host);
-    printf("\n%s\n", request_message);
+//    printf("\n%s\n", request_message);
 
     /* Translate host name into peer's IP address ;
      * This is name translation service by the operating system
@@ -179,7 +179,7 @@ The function will copy the all available valid link and copy it to the list.
 
 */
 void find_url(char *html_response, char*current_host, char *current_path,	\
-	char *url_list[MAX_NUM_FETCHES],  int *url_count)
+	char *url_list[MAX_NUM_URL],  int *url_count)
 {
 	int host_size = strlen(current_host);
 	int path_size = strlen(current_path);
@@ -226,14 +226,16 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 				continue;
 			}
 			
-			//identify size of url
+			//identify size of url	
 			char *href_link_end;
 			href_link_end = strchr(href_link_start+1, '"');
-            int url_size =href_link_end - href_link_start;
+            int url_size =href_link_end - href_link_start + 1;
             
 			//Copying the link to the string
 			url = realloc(url, sizeof(char)*url_size);
 			assert(url);
+//			bzero(url, url_size);	
+//			strncpy(url, href_link_start, url_size);
 			sscanf(href_link_start, "\"%[^\"]\"", url); 
 			
 			//checking if it acceptable host
@@ -241,7 +243,7 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 
 			if (url_type == 1) {
 				// Relative URL (implied protocol)
-				int new_url_size = url_size + strlen(protocol);
+				int new_url_size = url_size + strlen(protocol) + 1;
 				
 				char * temp = malloc(url_size*sizeof(char));
 				strcpy(temp, url);
@@ -253,7 +255,7 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 				free(temp);
 			} else if (url_type == 2) {
 				//Relative URL (implied protocol + host)
-				int new_url_size = url_size + strlen(protocol) + host_size;
+				int new_url_size = url_size + strlen(protocol) + host_size + 1;
 				
 				char * temp = malloc(url_size*sizeof(char));
 				strcpy(temp, url);
@@ -266,7 +268,7 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 				free(temp);
 			} else if (url_type == 3) {
 				//Relative URL (implied protocol + host + path)
-				int new_url_size = url_size + strlen(protocol) + host_size + path_size;
+				int new_url_size = url_size + strlen(protocol) + host_size + path_size + 1;
 				
 				char * temp = malloc(url_size*sizeof(char));
 				strcpy(temp, url);
@@ -284,7 +286,7 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 				add_new_url(url, url_list, url_count);
 			}
 			
-			if (*url_count == 100){
+			if (*url_count == MAX_NUM_URL){
 				break;
 			}
 			is_an_a_tag = 0;
@@ -303,24 +305,26 @@ returns 0 - Absolute URL
 int find_url_type(char *url){
     char *new_host_start;
     
+//    printf("URL error = %s\n", url);	
+    
     //Checking if Absolute URL
     //Check if the URL starts with " http: "
     new_host_start = strstr(url, "http:");
-    if(new_host_start - url == 0 ){
+    if(new_host_start != NULL && (new_host_start - url) == 0 ){
     	return 0;
     }
     
     //Checking if Relative (implied protocol)
     //Check if the URL starts with " // "
     new_host_start = strstr(url, "//");
-    if(new_host_start - url == 0 ){
+    if(new_host_start != NULL && (new_host_start - url) == 0 ){
     	return 1;
     }
     
     //Checking if Relative (implied host+protocol)
     //Check if the URL starts with ' / '
     new_host_start = strchr(url, '/');
-    if(new_host_start - url == 0 ){
+    if(new_host_start != NULL && (new_host_start - url) == 0 ){
     	return 2;
     }
     
@@ -334,7 +338,7 @@ the function will add new_url to the url_list if it does not exist in the list.
 Return: 0 - nothing is added
 		1 - url is added
 */
-int add_new_url(char *new_url, char *url_list[MAX_NUM_FETCHES], int*url_count){
+int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count){
 	
 	//check if the url are already inside the list
 	for (int i = 0; i < *url_count; i++){
@@ -370,7 +374,7 @@ int is_eligible_url(char * current_host, char * url){
     return 0;
 }	
 
-void add_hyperlink_from_url(char *url_list[MAX_NUM_FETCHES], int *url_count, char* url){
+void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
 	
 	char html_response[MAX_SIZE_RESPONSE+1];
 	int init_url_size = strlen(url);
@@ -382,9 +386,9 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_FETCHES], int *url_count, cha
 	
 
 	//getting a html response from host and path
-	printf("%s\n", url);
-	printf("host = %s\n", current_host);
-	printf("path = %s\n", current_path);
+//	printf("URL - ngambil = %s\n", url);
+//	printf("host = %s\n", current_host);
+//	printf("path = %s\n", current_path);
 	http_get_html(html_response, current_host, current_path);
 
 	find_url(html_response, current_host, current_path, url_list, url_count);
