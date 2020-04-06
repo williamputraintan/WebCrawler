@@ -3,7 +3,7 @@
 #define TRUE				1
 #define FALSE 				0
 #define MAX_NUM_URL			100		
-#define NOT_ACCEPTABLE 		0
+
 
 /*Include files*/
 #define _GNU_SOURCE
@@ -43,14 +43,11 @@ int main(int argc, char **argv)
 	char *curr_url = argv[1];
 	add_new_url(curr_url, url_list, &url_count);
 	
-	for(int i = 0; i< url_count; i++){
+	for(int i = 0; i < 2; i++){
 		curr_url = url_list[i];
 		
 		add_hyperlink_from_url(url_list, &url_count, curr_url);
-		
-		if (url_count >= MAX_NUM_URL){
-			break;
-		}
+
 		
 	}
 	
@@ -277,12 +274,17 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 				bzero(url, new_url_size);
 				strcat(url, protocol);
 				strcat(url, current_host);
-				strcat(url, current_path);
+				
+				//will only concatenate path to the last ' / '
+				char * last_path = strrchr(current_path, '/');
+				int size_last_path = last_path - current_path;
+				strncat(url, current_path, size_last_path);
+				
 				strcat(url, temp);
 				free(temp);
 			}
 			
-			if (is_eligible_url(current_host, url) == 1){
+			if (is_eligible_url(current_host, url) == TRUE){
 				add_new_url(url, url_list, url_count);
 			}
 			
@@ -321,14 +323,14 @@ int find_url_type(char *url){
 		return 1;
 	}
 	
-	//Checking if Relative (implied host+protocol)
+	//Checking if Relative (implied protocol + host)
 	//Check if the URL starts with ' / '
 	new_host_start = strchr(url, '/');
 	if(new_host_start != NULL && (new_host_start - url) == 0 ){
 		return 2;
 	}
 	
-	//Relative URL (implied host + protocol + directory)
+	//Relative URL (implied protocol + host + path)
 	return 3; 
 	
 }
@@ -383,16 +385,19 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 	char *current_host=calloc(init_url_size, sizeof(char));
 	char *current_path=calloc(init_url_size, sizeof(char));
 	sscanf(url, "http://%[^/]/%[^\n]", current_host, current_path);
-	
+			
 
 	//getting a html response from host and path
-//	printf("URL - ngambil = %s\n", url);
+//	printf("URL  = %s\n", url);
 //	printf("host = %s\n", current_host);
 //	printf("path = %s\n", current_path);
 	http_get_html(html_response, current_host, current_path);
-
-	find_url(html_response, current_host, current_path, url_list, url_count);
-
+//	printf("%s", html_response);
+	if(*url_count < MAX_NUM_URL){
+		find_url(html_response, current_host, current_path, url_list, url_count);
+	}
+//	printf("\nselese\n");
+	
 	free(current_host);
 	free(current_path);
 

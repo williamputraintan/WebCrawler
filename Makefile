@@ -1,5 +1,10 @@
 CC=gcc
 CFLAGS=-I.
 
-crawler: crawler.c
-	$(CC) -o crawler crawler.c -I.
+crawler: crawler.o
+	$(CC) -o crawler crawler.o -I.
+
+clean:
+	$(RM) server
+	$(RM) crawler.o
+
