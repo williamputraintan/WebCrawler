@@ -172,7 +172,6 @@ void http_get_html(char *html_response, char *host, char *path){
 
 /*
 The function will copy the all available valid link and copy it to the list.
-
 */
 void find_url(char *html_response, char*current_host, char *current_path,	\
 	char *url_list[MAX_NUM_URL],  int *url_count)
@@ -275,10 +274,10 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 				strcat(url, current_host);
 				
 				//will only concatenate path to the last ' / '
-//				char * last_path = strrchr(current_path, '/');
-//				int size_last_path = last_path - current_path + 1;
-//				strncat(url, current_path, size_last_path);
-				strcat(url, current_path);				
+				char * last_path = strrchr(current_path, '/');
+				int size_last_path = last_path - current_path + 1;
+				strncat(url, current_path, size_last_path);
+//				strcat(url, current_path);
 				strcat(url, temp);
 				free(temp);
 			}
