@@ -43,9 +43,8 @@
 		char *curr_url = argv[1];
 		add_new_url(curr_url, url_list, &url_count);
 		
-		for(int i = 0; i < url_count; i++){
+		for(int i = 0; i < 10; i++){
 			curr_url = url_list[i];
-			printf("%s", curr_url);
 			add_hyperlink_from_url(url_list, &url_count, curr_url);
 	
 		}
@@ -216,7 +215,7 @@
 				//check where the hyperlink starts
 				//( this anticipate if there are spaces between " = " )
 				char *href_link_start;
-				href_link_start = strchr(href_tag, '"');
+				href_link_start = strchr(href_tag, '"')+1;
 				if(href_link_start == NULL){
 					is_an_a_tag = 0;
 					continue;
@@ -224,15 +223,15 @@
 				
 				//identify size of url	
 				char *href_link_end;
-				href_link_end = strchr(href_link_start+1, '"');
-				int url_size =href_link_end - href_link_start + 1;
+				href_link_end = strchr(href_link_start, '"');
+				int url_size =href_link_end - href_link_start+1;
 				
 				//Copying the link to the string
 				url = realloc(url, sizeof(char)*url_size);
 				assert(url);
-	//			bzero(url, url_size);	
-	//			strncpy(url, href_link_start, url_size);
-				sscanf(href_link_start, "\"%[^\"]\"", url); 
+				bzero(url, url_size);	
+				strncpy(url, href_link_start, (url_size-1));
+	//			sscanf(href_link_start, "\"%[^\"]\"", url); 
 				
 				//checking if it acceptable host
 				int url_type = find_url_type(url);
