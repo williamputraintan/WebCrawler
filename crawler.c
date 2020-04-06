@@ -20,11 +20,11 @@
 #include <ctype.h>
 
 /*function prototype*/
-void http_get_html(char *html_response, char *host, char *path);
-void find_url(char *html_response, char*current_host, char *path, char *url_list[MAX_NUM_URL],  int *url_count);
+void http_get_html(char *html_response, char *url);
+void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL],  int *url_count);
 int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count);
 int find_url_type(char *url);
-int is_eligible_url(char * current_host, char * url);
+int is_eligible_url(char * old_url, char * new_url);
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
 
 
@@ -61,18 +61,24 @@ int main(int argc, char **argv)
 /*
 The function will get HTML code from the URL given and copy to the html_response string.
 */
-void http_get_html(char *html_response, char *host, char *path){
-
-	int portno	= PORTNO;		
+void http_get_html(char *html_response, char *url){
+	
 	struct hostent *server;
 	struct sockaddr_in serv_addr;
 	int sockfd, bytes, message_size, total, received,sent;
 	char *request_message;
 	
+	//parsing url to host and string
+	int init_url_size = strlen(url);
+	char *host=calloc(init_url_size, sizeof(char));
+	assert(host);
+	char *path=calloc(init_url_size, sizeof(char));
+	assert(path);
+	sscanf(url, "http://%[^/]/%[^\n]", host, path);
+	
 	/*Calculate message size*/
 	message_size = 0;
-	message_size += strlen(host);
-	message_size += strlen(path);
+	message_size += strlen(url);
 	message_size += strlen("GET /%s HTTP/1.1\r\n");
 	message_size += strlen("Host: %s\r\n");
 	message_size += strlen("User-Agent: wintan\r\n");
@@ -80,6 +86,7 @@ void http_get_html(char *html_response, char *host, char *path){
 	
 	/*Allocating space for message*/
 	request_message = malloc(sizeof(char)*message_size);
+	assert(request_message);
 	
 	sprintf(request_message, "GET /%s HTTP/1.1\r\n"
 		"Host: %s\r\n"
@@ -103,7 +110,7 @@ void http_get_html(char *html_response, char *host, char *path){
 	bzero((char *)&serv_addr, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	bcopy(server->h_addr_list[0], (char *)&serv_addr.sin_addr.s_addr, server->h_length);
-	serv_addr.sin_port = htons(portno);
+	serv_addr.sin_port = htons(PORTNO);
 	
 	/* Create TCP socket -- active open
 	* Preliminary steps: Setup: creation of active open socket
@@ -163,6 +170,8 @@ void http_get_html(char *html_response, char *host, char *path){
 	/* close the socket */
 	close(sockfd);
 	
+	free(host);
+	free(path);
 	free(request_message);
 	
 }
@@ -170,14 +179,8 @@ void http_get_html(char *html_response, char *host, char *path){
 /*
 The function will copy the all available valid link and copy it to the list.
 */
-void find_url(char *html_response, char*current_host, char *current_path,	\
-	char *url_list[MAX_NUM_URL],  int *url_count)
+void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL],  int *url_count)
 {
-	int host_size = strlen(current_host);
-	int path_size = strlen(current_path);
-	char protocol[]="http:";
-	
-	char *second_current_host_component = strchr(current_host, '.')+1;
 	
 	int start_tag, end_tag;
 	int is_an_a_tag = 0;
@@ -209,8 +212,8 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 				continue;
 			}
 			
-			//check where the link starts
-			//this anticipate if there are spaces between " = "
+			//check where the hyperlink starts
+			//( this anticipate if there are spaces between " = " )
 			char *href_link_start;
 			href_link_start = strchr(href_tag, '"');
 			if(href_link_start == NULL){
@@ -235,51 +238,58 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 
 			if (url_type == 1) {
 				// Relative URL (implied protocol)
-				int new_url_size = url_size + strlen(protocol) + 1;
 				
+				char *after_protocol = strstr(current_url, "//");
+				int current_protcol_size = after_protocol - current_url;
+				
+				int new_url_size = url_size + current_protcol_size + 1;
 				char * temp = malloc(url_size*sizeof(char));
+				assert(url);
 				strcpy(temp, url);
 				
 				url = realloc(url, sizeof(char)*new_url_size);
 				bzero(url, new_url_size);
-				strcat(url, protocol);
+				strncpy(url, current_url, current_protcol_size);
 				strcat(url, temp);
+				
 				free(temp);
 			} else if (url_type == 2) {
 				//Relative URL (implied protocol + host)
-				int new_url_size = url_size + strlen(protocol) + host_size + 1;
-				
+				char *after_host_abal = strchr(current_url, '/');
+				char *after_host = strchr((after_host_abal+2), '/');
+				int current_host_size = after_host - current_url;
+
+				int new_url_size = url_size + current_host_size + 1;
 				char * temp = malloc(url_size*sizeof(char));
+				assert(url);
 				strcpy(temp, url);
-				
+
 				url = realloc(url, sizeof(char)*new_url_size);
 				bzero(url, new_url_size);
-				strcat(url, protocol);
-				strcat(url, current_host);
+				strncpy(url, current_url, current_host_size);
 				strcat(url, temp);
+				
 				free(temp);
 			} else if (url_type == 3) {
-				//Relative URL (implied protocol + host + path)
-				int new_url_size = url_size + strlen(protocol) + host_size + path_size + 1;
+				//Relative URL (implied protocol + host)
+				char *after_path = strrchr(current_url, '/');
+				int current_path_size = after_path - current_url;
 				
+				int new_url_size = url_size + current_path_size + 1;
 				char * temp = malloc(url_size*sizeof(char));
+				assert(temp);
 				strcpy(temp, url);
 				
 				url = realloc(url, sizeof(char)*new_url_size);
+				assert(url);
 				bzero(url, new_url_size);
-				strcat(url, protocol);
-				strcat(url, current_host);
-				
-				//will only concatenate path to the last ' / '
-				char * last_path = strrchr(current_path, '/');
-				int size_last_path = last_path - current_path + 1;
-				strncat(url, current_path, size_last_path);
-//				strcat(url, current_path);
+				strncpy(url, current_url, current_path_size);
 				strcat(url, temp);
+				
 				free(temp);
 			}
 			
-			if (is_eligible_url(current_host, url) == TRUE){
+			if (is_eligible_url(current_url, url) == TRUE){
 				add_new_url(url, url_list, url_count);
 			}
 			
@@ -356,45 +366,39 @@ int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count){
 The function will check if the url will check if the url have the same 
 second component host. Will return 1 if its the same and 0 otherwise.
 */
-int is_eligible_url(char * current_host, char * url){
+int is_eligible_url(char * old_url, char * new_url){
+//	printf("\n\nurl ny = %s\n", new_url);
+	char *current_host = calloc(strlen(old_url), sizeof(char));
+	assert(current_host);
+	sscanf(old_url, "http://%[^/]/", current_host);
+
 	//Will assign the variable below to point after the first " . "
 	char *component_cur_host = strchr(current_host, '.') + 1;
-	char *component_new_host = strchr(url, '.') + 1;
-	
+	char *component_new_host = strchr(new_url, '.') + 1;
+//	printf("lama= %s\nbru = %s\n", component_cur_host, component_new_host);
 	int size_host_compare = strlen(component_cur_host);
 	
 	if (strncmp(component_cur_host, component_new_host, size_host_compare) == 0)
 	{
+		free(current_host);
 		return 1;
 	}
-	
+	free(current_host);
 	return 0;
 }	
 
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
 	
 	char html_response[MAX_SIZE_RESPONSE+1];
-	int init_url_size = strlen(url);
+	printf("%s\n", url);
+	http_get_html(html_response, url);
 	
-	//copying host and path to a string
-	char *current_host=calloc(init_url_size, sizeof(char));
-	char *current_path=calloc(init_url_size, sizeof(char));
-	sscanf(url, "http://%[^/]/%[^\n]", current_host, current_path);
-			
-
-	//getting a html response from host and path
-	printf("%s", url);
-//	printf("host = %s\n", current_host);
-//	printf("path = %s\n", current_path);
-	http_get_html(html_response, current_host, current_path);
 //	printf("%s", html_response);
 	if(*url_count < MAX_NUM_URL){
-		find_url(html_response, current_host, current_path, url_list, url_count);
+		find_url(html_response, url, url_list, url_count);
 	}
 //	printf("\nselese\n");
-	
-	free(current_host);
-	free(current_path);
+
 
 }
 
