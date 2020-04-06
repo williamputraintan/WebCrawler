@@ -235,7 +235,7 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 			
 			//checking if it acceptable host
 			int url_type = find_url_type(url);
-
+			
 			if (url_type == 1) {
 				// Relative URL (implied protocol)
 				
@@ -255,8 +255,8 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 				free(temp);
 			} else if (url_type == 2) {
 				//Relative URL (implied protocol + host)
-				char *after_host_abal = strchr(current_url, '/');
-				char *after_host = strchr((after_host_abal+2), '/');
+				char *after_protocol = strstr(current_url, "//")+2;
+				char *after_host = strchr(after_protocol, '/');
 				int current_host_size = after_host - current_url;
 
 				int new_url_size = url_size + current_host_size + 1;
@@ -288,7 +288,7 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 				
 				free(temp);
 			}
-			
+			printf("%s", url);
 			if (is_eligible_url(current_url, url) == TRUE){
 				add_new_url(url, url_list, url_count);
 			}
