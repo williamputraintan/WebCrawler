@@ -48,7 +48,6 @@ int main(int argc, char **argv)
 		
 		add_hyperlink_from_url(url_list, &url_count, curr_url);
 
-		
 	}
 	
 	//free memory allocated
@@ -276,10 +275,10 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 				strcat(url, current_host);
 				
 				//will only concatenate path to the last ' / '
-				char * last_path = strrchr(current_path, '/');
-				int size_last_path = last_path - current_path;
-				strncat(url, current_path, size_last_path);
-				
+//				char * last_path = strrchr(current_path, '/');
+//				int size_last_path = last_path - current_path;
+//				strncat(url, current_path, size_last_path);
+				strcat(url, current_path);				
 				strcat(url, temp);
 				free(temp);
 			}
