@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 		fprintf(stderr,"ERROR, no URL provided\n");
 		exit(1);
 	}
-
+/*
 	//intialize
 	char *url_list[MAX_NUM_URL];
 	int url_count = 0;
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 		printf("%s\n", url_list[i]);
 		free(url_list[i]);
 	}
-	
+*/	
 	return 0;
 }
 
