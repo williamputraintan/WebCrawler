@@ -45,7 +45,6 @@ int main(int argc, char **argv)
 	
 	for(int i = 0; i < url_count; i++){
 		curr_url = url_list[i];
-		printf("%s/n", curr_url);
 		add_hyperlink_from_url(url_list, &url_count, curr_url);
 
 	}
@@ -178,7 +177,7 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 {
 	int host_size = strlen(current_host);
 	int path_size = strlen(current_path);
-	char protocol[]="http://";
+	char protocol[]="http:";
 	
 	char *second_current_host_component = strchr(current_host, '.')+1;
 	
