@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 	char *curr_url = argv[1];
 	add_new_url(curr_url, url_list, &url_count);
 	
-	for(int i = 0; i < 2; i++){
+	for(int i = 0; i < url_count; i++){
 		curr_url = url_list[i];
 		
 		add_hyperlink_from_url(url_list, &url_count, curr_url);
@@ -276,7 +276,7 @@ void find_url(char *html_response, char*current_host, char *current_path,	\
 				
 				//will only concatenate path to the last ' / '
 //				char * last_path = strrchr(current_path, '/');
-//				int size_last_path = last_path - current_path;
+//				int size_last_path = last_path - current_path + 1;
 //				strncat(url, current_path, size_last_path);
 				strcat(url, current_path);				
 				strcat(url, temp);
