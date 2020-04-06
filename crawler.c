@@ -51,10 +51,8 @@ int main(int argc, char **argv)
 	
 	//free memory allocated
 	for (int i = 0; i < url_count; i++){
-		printf("%s\n", url_list[i]);
 		free(url_list[i]);
 	}
-	exit(0);
 	return 0;
 }
 
@@ -385,7 +383,7 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 			
 
 	//getting a html response from host and path
-//	printf("URL  = %s\n", url);
+	printf("%s", url);
 //	printf("host = %s\n", current_host);
 //	printf("path = %s\n", current_path);
 	http_get_html(html_response, current_host, current_path);
