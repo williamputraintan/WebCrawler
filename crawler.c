@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 		printf("%s\n", url_list[i]);
 		free(url_list[i]);
 	}
-	
+	exit(0);
 	return 0;
 }
 
