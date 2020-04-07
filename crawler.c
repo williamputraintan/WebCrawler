@@ -93,7 +93,7 @@
 			"User-Agent: wintan\r\n"
 			"Content-Type: text/html; charset=UTF-8\r\n\r\n",
 			path, host);
-	//    printf("\n%s\n", request_message);
+	    printf("\n%s\n", request_message);
 	
 		/* Translate host name into peer's IP address ;
 		 * This is name translation service by the operating system
@@ -312,7 +312,7 @@
 	int find_url_type(char *url){
 		char *new_host_start;
 		
-	//    printf("URL error = %s\n", url);	
+	    printf("URL error = %s\n", url);	
 		
 		//Checking if Absolute URL
 		//Check if the URL starts with " http: "
