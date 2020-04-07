@@ -153,7 +153,7 @@ fprintf(stderr, "weh_bzero\n");
 	received = 0;
 	do { 	
 		bytes = read(sockfd,html_response+received,total-received);
-
+fprintf(stderr, "weh3\n");
 		if (bytes < 0){
 			perror("ERROR reading from socket");
 			exit(0);
@@ -163,7 +163,7 @@ fprintf(stderr, "weh_bzero\n");
 		}
 		received+=bytes;
 	} while (received < total);
-fprintf(stderr, "weh3\n");
+fprintf(stderr, "weh4\n");
 
 	if (received == total){
 		perror("ERROR storing complete response from socket");
