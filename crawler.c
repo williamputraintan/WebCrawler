@@ -145,36 +145,26 @@ void http_get_html(char *html_response, char *url){
 		}
 		sent+=bytes;
 	} while (sent < total);
-fprintf(stderr, "weh1\n");
 	bzero(html_response, MAX_SIZE_RESPONSE);
-fprintf(stderr, "weh_bzero\n");
 	/* receive the response */
 	total = MAX_SIZE_RESPONSE-1;
 	received = 0;
 	do { 
-fprintf(stderr, "weh2\n");
-fprintf(stderr, "html_response+received = %s\n", html_response+received);
-fprintf(stderr, "total-received = %d\n", total-received);
 		bytes = read(sockfd,html_response+received,total-received);break;
-fprintf(stderr, "weh3\n");
-fprintf(stderr, "bytes = %d\n", bytes);
+
 		if (bytes < 0){
 			perror("ERROR reading from socket");
 			exit(0);
 		}
-fprintf(stderr, "weh4\n");
+
 		if (bytes == 0){
 			break;
 		}                                
-fprintf(stderr, "weh5\n");
+
 		received+=bytes;
-fprintf(stderr, "received = %d\n", received);
-fprintf(stderr, "total = %d\n", total);
-if(received < total){
-	fprintf(stderr, "REPEAT\n");
-}
+
 	} while (received < total);
-fprintf(stderr, "weh6\n");
+
 
 	if (received == total){
 		perror("ERROR storing complete response from socket");
