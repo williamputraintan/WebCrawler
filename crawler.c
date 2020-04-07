@@ -162,9 +162,10 @@ fprintf(stderr, "weh4\n");
 		if (bytes == 0){
 			break;
 		}
+fprintf(stderr, "weh5\n");
 		received+=bytes;
 	} while (received < total);
-fprintf(stderr, "weh5\n");
+fprintf(stderr, "weh6\n");
 
 	if (received == total){
 		perror("ERROR storing complete response from socket");
