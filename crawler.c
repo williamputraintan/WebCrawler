@@ -164,12 +164,12 @@ void http_get_html(char *html_response, char *url){
 		fprintf(stderr, "weh3\n");
 		received+=bytes;
 	} while (received < total);
-	
+/*	
 	if (received == total){
 		perror("ERROR storing complete response from socket");
 		exit(0);	
 	}
-	
+	*/
 	fprintf(stderr, "%s\n", html_response);
 	/* close the socket */
 	close(sockfd);
