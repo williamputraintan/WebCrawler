@@ -167,6 +167,9 @@ fprintf(stderr, "weh5\n");
 		received+=bytes;
 fprintf(stderr, "received = %d\n", received);
 fprintf(stderr, "total = %d\n", total);
+if(received < total){
+	fprintf(stderr, "REPEAT\n");
+}
 	} while (received < total);
 fprintf(stderr, "weh6\n");
 
