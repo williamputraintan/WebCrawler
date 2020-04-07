@@ -153,7 +153,7 @@ void http_get_html(char *html_response, char *url){
 	received = 0;
 	do { 	
 		bytes = read(sockfd,html_response+received,total-received);
-		fprintf(stderr, "weh2\n");
+		fprintf(stderr, "respons = %s\n", html_response);
 		if (bytes < 0){
 			perror("ERROR reading from socket");
 			exit(0);
@@ -161,7 +161,7 @@ void http_get_html(char *html_response, char *url){
 		if (bytes == 0){
 			break;
 		}
-		received+=bytes;fprintf(stderr, "=%d\n", bytes);
+		received+=bytes;
 	} while (received < total);
 	
 	if (received == total){
