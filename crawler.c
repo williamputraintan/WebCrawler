@@ -158,12 +158,13 @@ fprintf(stderr, "weh3\n");
 			perror("ERROR reading from socket");
 			exit(0);
 		}
+fprintf(stderr, "weh4\n");
 		if (bytes == 0){
 			break;
 		}
 		received+=bytes;
 	} while (received < total);
-fprintf(stderr, "weh4\n");
+fprintf(stderr, "weh5\n");
 
 	if (received == total){
 		perror("ERROR storing complete response from socket");
