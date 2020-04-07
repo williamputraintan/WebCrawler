@@ -292,7 +292,7 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 			}
 
 			if (is_eligible_url(current_url, url) == TRUE){
-				fprintf(stderr, "url add = %s", url);
+				fprintf(stderr, "url add = %s\n", url);
 				add_new_url(url, url_list, url_count);
 			}
 			
