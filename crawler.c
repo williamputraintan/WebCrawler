@@ -31,7 +31,7 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 /*Main Function of the program*/
 int main(int argc, char **argv)
 {	
-	fprintf(stderr, "TESTING\n");
+//	fprintf(stderr, "TESTING\n");
 	//error when no URL provided
 	if (argc < 2) {
 		fprintf(stderr,"ERROR, no URL provided\n");
@@ -43,11 +43,11 @@ int main(int argc, char **argv)
 	int url_count = 0;
 	char *curr_url = argv[1];
 	add_new_url(curr_url, url_list, &url_count);
-	fprintf(stderr, "CURRENT URL = %s\n", curr_url);
+//	fprintf(stderr, "CURRENT URL = %s\n", curr_url);
 	for(int i = 0; i < url_count; i++){
 		curr_url = url_list[i];
 		add_hyperlink_from_url(url_list, &url_count, curr_url);
-		printf("url count = %d\n", url_count);
+//		fprintf(stderr, "url count = %d\n", url_count);
 
 	}
 	
@@ -95,7 +95,7 @@ void http_get_html(char *html_response, char *url){
 		"User-Agent: wintan\r\n"
 		"Content-Type: text/html; charset=UTF-8\r\n\r\n",
 		path, host);
-	fprintf(stderr, "\n%s\n", request_message);
+//	fprintf(stderr, "\n%s\n", request_message);
 
 	/* Translate host name into peer's IP address ;
 	 * This is name translation service by the operating system
@@ -171,7 +171,7 @@ void http_get_html(char *html_response, char *url){
 		exit(0);	
 	}
 	
-	fprintf(stderr, "%s\n", html_response);
+//	fprintf(stderr, "%s\n", html_response);
 	/* close the socket */
 	close(sockfd);
 	
@@ -237,7 +237,7 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 			bzero(url, url_size);	
 			strncpy(url, href_link_start, (url_size-1));
 //			sscanf(href_link_start, "\"%[^\"]\"", url); 
-			fprintf(stderr, "url found = %s\n", url);
+//			fprintf(stderr, "url found = %s\n", url);
 			//checking if it acceptable host
 			int url_type = find_url_type(url);
 			
@@ -295,7 +295,7 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 			}
 
 			if (is_eligible_url(current_url, url) == TRUE){
-				fprintf(stderr, "url add = %s\n", url);
+//				fprintf(stderr, "url add = %s\n", url);
 				add_new_url(url, url_list, url_count);
 			}
 			
@@ -396,7 +396,7 @@ int is_eligible_url(char * old_url, char * new_url){
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
 	
 	char html_response[MAX_SIZE_RESPONSE+1];
-//	printf("%s\n", url);
+	printf("%s\n", url);
 	http_get_html(html_response, url);
 	
 	
