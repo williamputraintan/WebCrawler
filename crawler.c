@@ -145,7 +145,7 @@ void http_get_html(char *html_response, char *url){
 		}
 		sent+=bytes;
 	} while (sent < total);
-
+fprintf(stderr, "weh2\n");
 	bzero(html_response, MAX_SIZE_RESPONSE);
 fprintf(stderr, "weh_bzero\n");
 	/* receive the response */
