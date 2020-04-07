@@ -153,6 +153,8 @@ fprintf(stderr, "weh_bzero\n");
 	received = 0;
 	do { 
 fprintf(stderr, "weh2\n");
+fprintf(stderr, "html_response+received = %d\n", html_response+received);
+fprintf(stderr, "total-received = %d\n", total-received);
 		bytes = read(sockfd,html_response+received,total-received);
 fprintf(stderr, "weh3\n");
 fprintf(stderr, "bytes = %d\n", bytes);
