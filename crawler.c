@@ -42,7 +42,7 @@
 		int url_count = 0;
 		char *curr_url = argv[1];
 		add_new_url(curr_url, url_list, &url_count);
-		
+		printf("CURR URL = %s\n", curr_url);
 		for(int i = 0; i < url_count; i++){
 			curr_url = url_list[i];
 			add_hyperlink_from_url(url_list, &url_count, curr_url);
@@ -88,7 +88,7 @@
 		/*Allocating space for message*/
 		request_message = malloc(sizeof(char)*message_size);
 		assert(request_message);
-		printf("CURR URL = %s", url);
+
 		sprintf(request_message, "GET /%s HTTP/1.1\r\n"
 			"Host: %s\r\n"
 			"User-Agent: wintan\r\n"
