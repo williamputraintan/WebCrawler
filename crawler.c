@@ -128,7 +128,7 @@ void http_get_html(char *html_response, char *url){
 		perror("ERROR connecting");
 		exit(0);
 	}
-
+	fprintf(stderr, "weh1\n");
 	/* Do processing */
 
 	/* send the request */
@@ -147,7 +147,7 @@ void http_get_html(char *html_response, char *url){
 	} while (sent < total);
 
 	bzero(html_response, MAX_SIZE_RESPONSE);
-	fprintf(stderr, "weh1\n");
+
 	/* receive the response */
 	total = MAX_SIZE_RESPONSE-1;
 	received = 0;
@@ -161,7 +161,6 @@ void http_get_html(char *html_response, char *url){
 		if (bytes == 0){
 			break;
 		}
-		fprintf(stderr, "weh4\n");
 		received+=bytes;
 	} while (received < total);
 	
