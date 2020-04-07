@@ -128,7 +128,6 @@ void http_get_html(char *html_response, char *url){
 		perror("ERROR connecting");
 		exit(0);
 	}
-	fprintf(stderr, "weh\n");
 
 	/* Do processing */
 
@@ -148,6 +147,7 @@ void http_get_html(char *html_response, char *url){
 	} while (sent < total);
 
 	bzero(html_response, MAX_SIZE_RESPONSE);
+	fprintf(stderr, "weh\n");
 	
 	/* receive the response */
 	total = MAX_SIZE_RESPONSE-1;
