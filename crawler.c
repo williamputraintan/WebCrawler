@@ -152,24 +152,34 @@ fprintf(stderr, "weh_bzero\n");
 	total = MAX_SIZE_RESPONSE-1;
 	received = 0;
 	do { 
-
-		bytes = read(sockfd,html_response,total);
-
+fprintf(stderr, "weh2\n");
+fprintf(stderr, "html_response+received = %s\n", html_response+received);
+fprintf(stderr, "total-received = %d\n", total-received);
+		bytes = read(sockfd,html_response+received,total-received);
+fprintf(stderr, "weh3\n");
+fprintf(stderr, "bytes = %d\n", bytes);
 		if (bytes < 0){
 			perror("ERROR reading from socket");
 			exit(0);
 		}
-
+fprintf(stderr, "weh4\n");
 		if (bytes == 0){
 			break;
 		}                                
+fprintf(stderr, "weh5\n");
+		received+=bytes;
+fprintf(stderr, "received = %d\n", received);
+fprintf(stderr, "total = %d\n", total);
+if(received < total){
+	fprintf(stderr, "REPEAT\n");
+}
+	} while (received < total);
+fprintf(stderr, "weh6\n");
 
-
-
-	} while (bytes > 0);
-
-
-	
+	if (received == total){
+		perror("ERROR storing complete response from socket");
+		exit(0);	
+	}
 	
 	fprintf(stderr, "%s\n", html_response);
 	/* close the socket */
