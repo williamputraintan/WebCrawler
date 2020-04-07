@@ -155,7 +155,7 @@ fprintf(stderr, "weh_bzero\n");
 fprintf(stderr, "weh2\n");
 fprintf(stderr, "html_response+received = %s\n", html_response+received);
 fprintf(stderr, "total-received = %d\n", total-received);
-		bytes = read(sockfd,html_response+received,total-received);
+		bytes = read(sockfd,html_response+received,total-received);break;
 fprintf(stderr, "weh3\n");
 fprintf(stderr, "bytes = %d\n", bytes);
 		if (bytes < 0){
