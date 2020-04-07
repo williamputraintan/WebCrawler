@@ -163,7 +163,7 @@ fprintf(stderr, "weh_bzero\n");
 		}
 		received+=bytes;
 	} while (received < total);
-	
+fprintf(stderr, "weh3\n");
 
 	if (received == total){
 		perror("ERROR storing complete response from socket");
