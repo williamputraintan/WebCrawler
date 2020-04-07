@@ -395,7 +395,7 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 //	printf("%s\n", url);
 	http_get_html(html_response, url);
 	
-	printf("%s\n", html_response);
+	fprintf(stderr, "%s\n", html_response);
 	if(*url_count < MAX_NUM_URL){
 		find_url(html_response, url, url_list, url_count);
 	}
