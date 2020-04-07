@@ -26,7 +26,7 @@ int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count);
 int find_url_type(char *url);
 int is_eligible_url(char * old_url, char * new_url);
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
-int check_response_log(char*response);
+int status_response(char*response);
 
 
 /*Main Function of the program*/
@@ -410,7 +410,7 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 	printf("%s\n", url);
 	http_get_html(html_response, url);
 	
-	if ( check_response_log(html_response) == 5 ){
+	if ( status_response(html_response) == 503 && status_response(html_response) == 504 ){
 		  http_get_html(html_response, url);
 	}
 	
@@ -422,24 +422,22 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 
 }
 
-int check_response_log(char*response){
+int status_response(char*response){
 	char *end_first_line = strchr(response, '\n');
 	int size_first_line = end_first_line - response;
+	int result;
 	
-	char*status = malloc(sizeof(char)*size_first_line);
-	sscanf(response, "HTTP/1.1%[^\n]\n", status);
-	int status_result;
-	if (strncmp(status, " 5", 2) == 0){
-		status_result = 5;
-	} else if (strncmp(status, " 4", 2) == 0){
-		status_result = 4;
-	} else {
-		status_result = 2;
-	}
-	free(status);
-	return status_result;
+	char*first_line = malloc(sizeof(char)*size_first_line);
+	sscanf(response, "HTTP/1.1%[^\n]\n", first_line);
+	
+	char*status_number = malloc(sizeof(char)*strlen(first_line));
+	strncpy(status_number+1, first_line, 3);
+	result = atoi(status_number);
+	free(first_line);
+	free(status_number);
+	return result;
 }
-		
+
 		
 	
 	
