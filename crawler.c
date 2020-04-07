@@ -394,7 +394,7 @@
 		printf("%s\n", url);
 		http_get_html(html_response, url);
 		
-	/	printf("%s", html_response);
+		printf("%s", html_response);
 		if(*url_count < MAX_NUM_URL){
 			find_url(html_response, url, url_list, url_count);
 		}
