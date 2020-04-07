@@ -95,7 +95,7 @@ void http_get_html(char *html_response, char *url){
 		"User-Agent: wintan\r\n"
 		"Content-Type: text/html; charset=UTF-8\r\n\r\n",
 		path, host);
-	printf("\n%s\n", request_message);
+	fprintf(stderr, "\n%s\n", request_message);
 
 	/* Translate host name into peer's IP address ;
 	 * This is name translation service by the operating system
@@ -234,7 +234,7 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 			bzero(url, url_size);	
 			strncpy(url, href_link_start, (url_size-1));
 //			sscanf(href_link_start, "\"%[^\"]\"", url); 
-			
+			fprintf(stderr, "url found = %s", url);
 			//checking if it acceptable host
 			int url_type = find_url_type(url);
 			
