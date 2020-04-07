@@ -106,7 +106,7 @@ void http_get_html(char *html_response, char *url){
 		fprintf(stderr, "ERROR, no such host\n");
 		exit(0);
 	}
-
+	
 	/* Building data structures for socket */
 
 	bzero((char *)&serv_addr, sizeof(serv_addr));
@@ -128,7 +128,7 @@ void http_get_html(char *html_response, char *url){
 		perror("ERROR connecting");
 		exit(0);
 	}
-
+	fprintf(stderr, "weh\n");
 
 	/* Do processing */
 
