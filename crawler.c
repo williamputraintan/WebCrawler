@@ -43,7 +43,7 @@
 		char *curr_url = argv[1];
 		add_new_url(curr_url, url_list, &url_count);
 		
-		for(int i = 0; i < 10; i++){
+		for(int i = 0; i < url_count; i++){
 			curr_url = url_list[i];
 			add_hyperlink_from_url(url_list, &url_count, curr_url);
 	
