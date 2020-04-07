@@ -153,6 +153,7 @@ fprintf(stderr, "weh_bzero\n");
 	received = 0;
 	do { 	
 		bytes = read(sockfd,html_response+received,total-received);
+fprintf(stderr, "bytes = %d\n", bytes);		
 fprintf(stderr, "weh3\n");
 		if (bytes < 0){
 			perror("ERROR reading from socket");
