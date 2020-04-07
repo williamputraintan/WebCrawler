@@ -164,6 +164,7 @@ void http_get_html(char *html_response, char *url){
 		fprintf(stderr, "weh3\n");
 		received+=bytes;
 	} while (received < total);
+	fprintf(stderr, "weh4\n");
 /*	
 	if (received == total){
 		perror("ERROR storing complete response from socket");
