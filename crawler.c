@@ -234,7 +234,7 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 			bzero(url, url_size);	
 			strncpy(url, href_link_start, (url_size-1));
 //			sscanf(href_link_start, "\"%[^\"]\"", url); 
-			fprintf(stderr, "url found = %s", url);
+			fprintf(stderr, "url found = %s\n", url);
 			//checking if it acceptable host
 			int url_type = find_url_type(url);
 			
