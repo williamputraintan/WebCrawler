@@ -164,6 +164,7 @@ fprintf(stderr, "weh4\n");
 		}
 fprintf(stderr, "weh5\n");
 		received+=bytes;
+fprintf(stderr, "%d\n", received);
 	} while (received < total);
 fprintf(stderr, "weh6\n");
 
