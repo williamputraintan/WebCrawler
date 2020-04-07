@@ -31,7 +31,7 @@
 	/*Main Function of the program*/
 	int main(int argc, char **argv)
 	{	
-		printf("\nbangsat\n");
+		printf("\nTESTING\n");
 		//error when no URL provided
 		if (argc < 2) {
 			fprintf(stderr,"ERROR, no URL provided\n");
