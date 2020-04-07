@@ -145,13 +145,14 @@ void http_get_html(char *html_response, char *url){
 		}
 		sent+=bytes;
 	} while (sent < total);
-fprintf(stderr, "weh2\n");
+fprintf(stderr, "weh1\n");
 	bzero(html_response, MAX_SIZE_RESPONSE);
 fprintf(stderr, "weh_bzero\n");
 	/* receive the response */
 	total = MAX_SIZE_RESPONSE-1;
 	received = 0;
-	do { 	
+	do { 
+fprintf(stderr, "weh2");
 		bytes = read(sockfd,html_response+received,total-received);
 fprintf(stderr, "bytes = %d\n", bytes);		
 fprintf(stderr, "weh3\n");
