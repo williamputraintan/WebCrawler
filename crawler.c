@@ -78,14 +78,10 @@ void http_get_html(char *html_response, char *url){
 	assert(path);
 	sscanf(url, "http://%[^/]/%[^\n]", host, path);
 	
-	if(strlen(path)==0){
-		strcpy(path, "/");
-	}
-	
 	/*Calculate message size*/
 	message_size = 0;
 	message_size += strlen(url);
-	message_size += strlen("GET %s HTTP/1.1\r\n");
+	message_size += strlen("GET /%s HTTP/1.1\r\n");
 	message_size += strlen("Host: %s\r\n");
 	message_size += strlen("User-Agent: wintan\r\n");
 	message_size += strlen("Content-Type: text/html; charset=UTF-8\r\n\r\n");
@@ -94,7 +90,7 @@ void http_get_html(char *html_response, char *url){
 	request_message = malloc(sizeof(char)*message_size);
 	assert(request_message);
 
-	sprintf(request_message, "GET %s HTTP/1.1\r\n"
+	sprintf(request_message, "GET /%s HTTP/1.1\r\n"
 		"Host: %s\r\n"
 		"User-Agent: wintan\r\n"
 		"Content-Type: text/html; charset=UTF-8\r\n\r\n",
