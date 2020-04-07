@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 	//error when no URL provided
 	if (argc < 2) {
 		fprintf(stderr,"ERROR, no URL provided\n");
-		exit(1);
+		exit(0);
 	}
 
 	//intialize
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 	for(int i = 0; i < url_count; i++){
 		curr_url = url_list[i];
 		add_hyperlink_from_url(url_list, &url_count, curr_url);
-		printf("url count = %d", url_count);
+		printf("url count = %d\n", url_count);
 
 	}
 	
