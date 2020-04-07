@@ -3,7 +3,7 @@
 #define TRUE				1
 #define FALSE 				0
 #define MAX_NUM_URL			100		
-
+#define ERROR_STATUS		0
 
 /*Include files*/
 #define _GNU_SOURCE
@@ -31,11 +31,11 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 /*Main Function of the program*/
 int main(int argc, char **argv)
 {	
-	printf("\nTESTING\n");
+	fprintf(stderr, "TESTING\n");
 	//error when no URL provided
 	if (argc < 2) {
 		fprintf(stderr,"ERROR, no URL provided\n");
-		exit(0);
+		exit(ERROR_STATUS);
 	}
 
 	//intialize
