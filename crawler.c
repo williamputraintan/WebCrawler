@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 	int url_count = 0;
 	char *curr_url = argv[1];
 	add_new_url(curr_url, url_list, &url_count);
-	printf("CURRENT URL = %s\n", curr_url);
+	fprintf(stderr, "CURRENT URL = %s\n", curr_url);
 	for(int i = 0; i < url_count; i++){
 		curr_url = url_list[i];
 		add_hyperlink_from_url(url_list, &url_count, curr_url);
@@ -171,7 +171,7 @@ void http_get_html(char *html_response, char *url){
 
 	/* close the socket */
 	close(sockfd);
-	
+	fprintf(stderr, "%s\n", html_response);
 	free(host);
 	free(path);
 	free(request_message);
@@ -395,7 +395,7 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 //	printf("%s\n", url);
 	http_get_html(html_response, url);
 	
-	fprintf(stderr, "%s\n", html_response);
+	
 	if(*url_count < MAX_NUM_URL){
 		find_url(html_response, url, url_list, url_count);
 	}
