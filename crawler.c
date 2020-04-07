@@ -26,6 +26,7 @@ int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count);
 int find_url_type(char *url);
 int is_eligible_url(char * old_url, char * new_url);
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
+int check_response_log(char*response);
 
 
 /*Main Function of the program*/
@@ -95,7 +96,7 @@ void http_get_html(char *html_response, char *url){
 		"User-Agent: wintan\r\n"
 		"Content-Type: text/html; charset=UTF-8\r\n\r\n",
 		path, host);
-	fprintf(stderr, "\n%s\n", request_message);
+//	fprintf(stderr, "\n%s\n", request_message);
 
 	/* Translate host name into peer's IP address ;
 	 * This is name translation service by the operating system
@@ -181,7 +182,7 @@ void http_get_html(char *html_response, char *url){
 		exit(0);	
 	}
 */	
-	fprintf(stderr, "%s\n", html_response);
+//	fprintf(stderr, "%s\n", html_response);
 	/* close the socket */
 	close(sockfd);
 	
@@ -409,6 +410,9 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 	printf("%s\n", url);
 	http_get_html(html_response, url);
 	
+	if ( check_response_log(html_response) == 5 ){
+		  http_get_html(html_response, url);
+	}
 	
 	if(*url_count < MAX_NUM_URL){
 		find_url(html_response, url, url_list, url_count);
@@ -417,4 +421,26 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 
 
 }
+
+int check_response_log(char*response){
+	char *end_first_line = strchr(response, '\n');
+	int size_first_line = end_first_line - response;
+	
+	char*status = malloc(sizeof(char)*size_first_line);
+	sscanf(response, "HTTP/1.1%[^\n]\n", status);
+	int status_result;
+	if (strncmp(status, " 5", 2) == 0){
+		status_result = 5;
+	} else if (strncmp(status, " 4", 2) == 0){
+		status_result = 4;
+	} else {
+		status_result = 2;
+	}
+	free(status);
+	return status_result;
+}
+		
+		
+	
+	
 
