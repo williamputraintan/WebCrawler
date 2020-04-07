@@ -128,7 +128,7 @@ void http_get_html(char *html_response, char *url){
 		perror("ERROR connecting");
 		exit(0);
 	}
-	fprintf(stderr, "weh1\n");
+
 	/* Do processing */
 
 	/* send the request */
@@ -164,7 +164,7 @@ fprintf(stderr, "weh2\n");
 		received+=bytes;
 	} while (received < total);
 	
-	fprintf(stderr, "weh3\n");
+
 	if (received == total){
 		perror("ERROR storing complete response from socket");
 		exit(0);	
