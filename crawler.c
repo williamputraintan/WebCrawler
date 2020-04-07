@@ -95,7 +95,7 @@ void http_get_html(char *html_response, char *url){
 		"User-Agent: wintan\r\n"
 		"Content-Type: text/html; charset=UTF-8\r\n\r\n",
 		path, host);
-//	fprintf(stderr, "\n%s\n", request_message);
+	fprintf(stderr, "\n%s\n", request_message);
 
 	/* Translate host name into peer's IP address ;
 	 * This is name translation service by the operating system
@@ -149,8 +149,18 @@ void http_get_html(char *html_response, char *url){
 	/* receive the response */
 	total = MAX_SIZE_RESPONSE-1;
 	received = 0;
-	do { 
-		bytes = read(sockfd,html_response+received,total-received);break;
+	
+	bytes = read(sockfd,html_response+received,total-received);
+
+	if (bytes < 0){
+		perror("ERROR reading from socket");
+		exit(0);
+	}
+
+	
+	
+/*	do { 
+		bytes = read(sockfd,html_response+received,total-received);
 
 		if (bytes < 0){
 			perror("ERROR reading from socket");
@@ -170,8 +180,8 @@ void http_get_html(char *html_response, char *url){
 		perror("ERROR storing complete response from socket");
 		exit(0);	
 	}
-	
-//	fprintf(stderr, "%s\n", html_response);
+*/	
+	fprintf(stderr, "%s\n", html_response);
 	/* close the socket */
 	close(sockfd);
 	
