@@ -25,9 +25,10 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count);
 int find_url_type(char *url);
 int is_eligible_url(char * old_url, char * new_url);
-void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
+int add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
 int status_response(char*response);
 void moved_site(char*response, char**moved_url);
+int check_content_type(char*response);
 
 /*Main Function of the program*/
 int main(int argc, char **argv)
@@ -401,14 +402,16 @@ int is_eligible_url(char * old_url, char * new_url){
 	return 0;
 }	
 
-void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
+int add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
 	char *additional_header = calloc(1, sizeof(char));
 	char html_response[MAX_SIZE_RESPONSE+1];
 	printf("%s\n", url);
 	http_get_html(html_response, url, additional_header);
 	
 	int response_num = status_response(html_response);
-	
+	if (check_content_type == 0){
+		return 0;
+	}
 	if (response_num == 503 || response_num == 504){
 		http_get_html(html_response, url, additional_header);
 	} else if ( response_num == 401) {
@@ -424,6 +427,7 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 	if(*url_count < MAX_NUM_URL){
 		find_url(html_response, url, url_list, url_count);
 	}
+	return 1;
 //	printf("\nselese\n");
 }
 int status_response(char*response){
@@ -457,4 +461,13 @@ void moved_site(char*response, char**moved_url){
 	strncpy(*moved_url, location_str, location_header_size);
 
 }
-
+int check_content_type(char*response){
+	char comparison[] = "Content-Type: text/html";
+	int comparisen_len = strlen(comparison);
+	char *content_type_str = strstr(response, "Content-Type:");
+	if(strncmp(comparison,content_type_str, comparisen_len) == 0){
+		return 1;
+	}
+	return 0;
+			
+}
