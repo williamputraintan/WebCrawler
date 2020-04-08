@@ -464,7 +464,7 @@ void moved_site(char*response, char**moved_url){
 
 }
 int check_content_type(char*response){
-	char comparison[] = "Content-Type: textl";
+	char comparison[] = "Content-Type: text";
 	int comparisen_len = strlen(comparison);
 	char *content_type_str = strstr(response, "Content-Type:");
 	if(strncmp(comparison,content_type_str, comparisen_len) == 0){
