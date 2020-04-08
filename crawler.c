@@ -416,7 +416,8 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 		http_get_html(html_response, url, auth);
 	} else if  ( response_num == 301) {
 		moved_site(html_response, &additional_header);
-		http_get_html(html_response, url, additional_header);
+		char *moved_url = strchr(additional_header, ' ')+1;
+		http_get_html(html_response, moved_url, "");
 	}
 	
 	free(additional_header);
