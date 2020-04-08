@@ -20,14 +20,14 @@
 #include <ctype.h>
 
 /*function prototype*/
-void http_get_html(char *html_response, char *url);
+void http_get_html(char *html_response, char *url, char*additional_haeder);
 void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL],  int *url_count);
 int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count);
 int find_url_type(char *url);
 int is_eligible_url(char * old_url, char * new_url);
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
 int status_response(char*response);
-void auth_func(char *html_response, char *url);
+void moved_site(char*response, char*extra_header);
 
 /*Main Function of the program*/
 int main(int argc, char **argv)
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 /*
 The function will get HTML code from the URL given and copy to the html_response string.
 */
-void http_get_html(char *html_response, char *url){
+void http_get_html(char *html_response, char *url, char*additional_haeder){
 	
 	struct hostent *server;
 	struct sockaddr_in serv_addr;
@@ -85,8 +85,9 @@ void http_get_html(char *html_response, char *url){
 	message_size += strlen("GET /%s HTTP/1.1\r\n");
 	message_size += strlen("Host: %s\r\n");
 	message_size += strlen("User-Agent: wintan\r\n");
-	message_size += strlen("Content-Type: text/html; charset=UTF-8\r\n\r\n");
-	
+	message_size += strlen("Content-Type: text/html; charset=UTF-8\r\n");
+	message_size += strlen(additional_haeder);
+	message_size += strlen("\r\n");
 	/*Allocating space for message*/
 	request_message = malloc(sizeof(char)*message_size);
 	assert(request_message);
@@ -94,8 +95,10 @@ void http_get_html(char *html_response, char *url){
 	sprintf(request_message, "GET /%s HTTP/1.1\r\n"
 		"Host: %s\r\n"
 		"User-Agent: wintan\r\n"
-		"Content-Type: text/html; charset=UTF-8\r\n\r\n",
-		path, host);
+		"Content-Type: text/html; charset=UTF-8\r\n"
+		"%s"
+		"\r\n",
+		path, host, additional_haeder);
 //	fprintf(stderr, "\n%s\n", request_message);
 
 	/* Translate host name into peer's IP address ;
@@ -405,22 +408,37 @@ int is_eligible_url(char * old_url, char * new_url){
 }	
 
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
-	
+	char *additional_header = malloc(sizeof(char));
 	char html_response[MAX_SIZE_RESPONSE+1];
 	printf("%s\n", url);
-	http_get_html(html_response, url);
+	http_get_html(html_response, url, additional_header);
 	int response_number = status_response(html_response);
 	fprintf(stderr, "%s\n", html_response);
+	
+	
+	
 	//This will try to refetch for the second time if the server response is on code 503, 504
 	//Code which starts with 5 is indicating is the server fault and can retry
 	//There might be a server overload
 	if ( response_number == 503 || response_number == 504){
-		  http_get_html(html_response, url);
+		  http_get_html(html_response, url, additional_header);
 	}
 	if ( response_number == 401){
-		auth_func(html_response, url);
+		int additional_header_size = strlen("Authorization: Basic d2ludGFuOnBhc3N3b3Jk\r\n");
+		
+		additional_header = realloc(additional_header, sizeof(char)*additional_header_size);
+		strcpy(additional_header, "Authorization: Basic d2ludGFuOnBhc3N3b3Jk\r\n");
+		
+		http_get_html(html_response, url, additional_header);
+	}
+	if ( response_number == 301){
+		
+		moved_site(html_response, additional_header);
+		http_get_html(html_response, url, additional_header);
+		
 	}
 	
+	free(additional_header);
 	//other response
 	
 	if(*url_count < MAX_NUM_URL){
@@ -453,132 +471,14 @@ int status_response(char*response){
 	
 	return status_number_int;
 }
-void auth_func(char *html_response, char *url){
+
+void moved_site(char*response, char*extra_header){
+	char *location_str = strstr(response, "Location:");
+	char *location_str_end = strchr(response, '\n');
+	int location_header_size = location_str_end - location_str;
 	
-	struct hostent *server;
-	struct sockaddr_in serv_addr;
-	int sockfd, bytes, message_size, total, received,sent;
-	char *request_message;
-	
-	//parsing url to host and string
-	int init_url_size = strlen(url);
-	char *host=calloc(init_url_size, sizeof(char));
-	assert(host);
-	char *path=calloc(init_url_size, sizeof(char));
-	assert(path);
-	sscanf(url, "http://%[^/]/%[^\n]", host, path);
-	
-	/*Calculate message size*/
-	message_size = 0;
-	message_size += strlen(url);
-	message_size += strlen("GET /%s HTTP/1.1\r\n");
-	message_size += strlen("Host: %s\r\n");
-	message_size += strlen("User-Agent: wintan\r\n");
-	message_size += strlen("Authorization: Basic d2ludGFuOnBhc3N3b3Jk");
-	message_size += strlen("Content-Type: text/html; charset=UTF-8\r\n\r\n");
-	
-	/*Allocating space for message*/
-	request_message = malloc(sizeof(char)*message_size);
-	assert(request_message);
+	extra_header = realloc(extra_header, sizeof(char)*location_header_size+3);
+	strncpy(extra_header, location_str, location_header_size);
+	strcat(extra_header, "/r/n");
 
-	sprintf(request_message, "GET /%s HTTP/1.1\r\n"
-		"Host: %s\r\n"
-		"User-Agent: wintan\r\n"
-		"Authorization: Basic d2ludGFuOnBhc3N3b3Jk\r\n"
-		"Content-Type: text/html; charset=UTF-8\r\n\r\n",
-		path, host);
-//	fprintf(stderr, "\n%s\n", request_message);
-
-	/* Translate host name into peer's IP address ;
-	 * This is name translation service by the operating system
-	 */
-	server = gethostbyname(host);
-	if (server == NULL)
-	{
-		fprintf(stderr, "ERROR, no such host\n");
-		exit(0);
-	}
-	
-	/* Building data structures for socket */
-
-	bzero((char *)&serv_addr, sizeof(serv_addr));
-	serv_addr.sin_family = AF_INET;
-	bcopy(server->h_addr_list[0], (char *)&serv_addr.sin_addr.s_addr, server->h_length);
-	serv_addr.sin_port = htons(PORTNO);
-	
-	/* Create TCP socket -- active open
-	* Preliminary steps: Setup: creation of active open socket
-	*/
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0)
-	{
-		perror("ERROR opening socket");
-		exit(0);
-	}
-	if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-	{
-		perror("ERROR connecting");
-		exit(0);
-	}
-
-	/* Do processing */
-
-	/* send the request */
-	total = strlen(request_message);
-	sent = 0;
-	do {
-		bytes = write(sockfd, request_message+sent, total-sent);
-		if (bytes < 0){
-			perror("ERROR writing to socket");
-			exit(0);
-		}
-		if (bytes == 0){
-			break;
-		}
-		sent+=bytes;
-	} while (sent < total);
-	bzero(html_response, MAX_SIZE_RESPONSE);
-	/* receive the response */
-	total = MAX_SIZE_RESPONSE-1;
-	received = 0;
-	
-	bytes = read(sockfd,html_response+received,total-received);
-
-	if (bytes < 0){
-		perror("ERROR reading from socket");
-		exit(0);
-	}
-
-	
-	
-/*	do { 
-		bytes = read(sockfd,html_response+received,total-received);
-
-		if (bytes < 0){
-			perror("ERROR reading from socket");
-			exit(0);
-		}
-
-		if (bytes == 0){
-			break;
-		}                                
-
-		received+=bytes;
-
-	} while (received < total);
-
-
-	if (received == total){
-		perror("ERROR storing complete response from socket");
-		exit(0);	
-	}
-*/	
-//	fprintf(stderr, "%s\n", html_response);
-	/* close the socket */
-	close(sockfd);
-	
-	free(host);
-	free(path);
-	free(request_message);
-	
 }
