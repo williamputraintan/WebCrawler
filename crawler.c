@@ -58,8 +58,50 @@ int main(int argc, char **argv)
 	}
 	return 0;
 }
-
-
+/*
+The function will add url found in the html response and add the url to the 
+url array list pass through the function. 
+The function will also handle 503, 504, 401, 301 status code response.
+*/
+void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
+	//Getting the html response from the current url 
+	char *additional_header = calloc(1, sizeof(char));
+	char html_response[MAX_SIZE_RESPONSE+1];
+	printf("%s\n", url);
+	http_get_html(html_response, url, additional_header);
+	
+	//It will identify the response code and take the appropriate responses
+	int response_num = status_response(html_response);
+	
+	//trying to refetch when receiving 503 ann 504 response
+	if (response_num == 503 || response_num == 504){
+		http_get_html(html_response, url, additional_header);
+		
+	//refetch the url with authentication
+	} else if ( response_num == 401) {
+		char auth[] = "Authorization: Basic d2ludGFuOnBhc3N3b3Jk\r\n";
+		http_get_html(html_response, url, auth);
+		
+	//refetch the url with the new url
+	} else if  ( response_num == 301) {
+		moved_site(html_response, &additional_header);
+		char *moved_url = strchr(additional_header, ' ')+1;
+		http_get_html(html_response, moved_url, "");
+	}
+	
+	//Will check if the response in in text/html format and will terminate the 
+	//function if it is the wrong format
+	if (check_content_type(html_response) == 0){
+		return;
+	}	
+	free(additional_header);
+	
+	//Will search url's from the HTML response and add the URL to the array list
+	//if the url found have not reach the MAX_NUM_URL
+	if(*url_count < MAX_NUM_URL){
+		find_url(html_response, url, url_list, url_count);
+	}
+}
 
 /*
 The function will get HTML code from the URL given and copy to the html_response string.
@@ -322,8 +364,6 @@ returns 0 - Absolute URL
 int find_url_type(char *url){
 	char *new_host_start;
 	
-//	printf("URL error = %s\n", url);	
-	
 	//Checking if Absolute URL
 	//Check if the URL starts with " http: "
 	new_host_start = strstr(url, "http:");
@@ -401,51 +441,6 @@ int is_eligible_url(char * old_url, char * new_url){
 	free(current_host);
 	return 0;
 }	
-/*
-The function will add url found in the html response and add the url to the 
-url array list pass through the function. 
-The function will also handle 503, 504, 401, 301 status code response.
-*/
-void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
-	//Getting the html response from the current url 
-	char *additional_header = calloc(1, sizeof(char));
-	char html_response[MAX_SIZE_RESPONSE+1];
-	printf("%s\n", url);
-	http_get_html(html_response, url, additional_header);
-	
-	//It will identify the response code and take the appropriate responses
-	int response_num = status_response(html_response);
-	
-	//trying to refetch when receiving 503 ann 504 response
-	if (response_num == 503 || response_num == 504){
-		http_get_html(html_response, url, additional_header);
-		
-	//refetch the url with authentication
-	} else if ( response_num == 401) {
-		char auth[] = "Authorization: Basic d2ludGFuOnBhc3N3b3Jk\r\n";
-		http_get_html(html_response, url, auth);
-		
-	//refetch the url with the new url
-	} else if  ( response_num == 301) {
-		moved_site(html_response, &additional_header);
-		char *moved_url = strchr(additional_header, ' ')+1;
-		http_get_html(html_response, moved_url, "");
-	}
-	
-	//Will check if the response in in text/html format and will terminate the 
-	//function if it is the wrong format
-	if (check_content_type(html_response) == 0){
-		return;
-	}	
-	free(additional_header);
-	
-	//Will search url's from the HTML response and add the URL to the array list
-	//if the url found have not reach the MAX_NUM_URL
-	if(*url_count < MAX_NUM_URL){
-		find_url(html_response, url, url_list, url_count);
-	}
-
-}
 
 /*
 The function will find the status response code. It return the status repsonse 
