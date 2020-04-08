@@ -21,7 +21,7 @@
 
 /*function prototype*/
 void http_get_html(char *html_response, char *url, char*additional_header);
-void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL],  int *url_count);
+void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL], int *url_count);
 int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count);
 int find_url_type(char *url);
 int is_eligible_url(char * old_url, char * new_url);
@@ -197,11 +197,25 @@ void http_get_html(char *html_response, char *url, char*additional_header){
 
 
 	/* receive the response */
-	bytes = read(sockfd,html_response,total);
-	if (bytes < 0){
-		perror("ERROR reading from socket");
-		exit(0);
+	
+	received = 0;
+	do { 	
+		bytes = read(sockfd,html_response+received,total-received);
+		if (bytes < 0){
+			perror("ERROR reading from socket");
+			exit(0);
+		}
+		if (bytes == 0){
+			break;
+		}
+		received+=bytes;
+	} while (received < total);
+	
+	if (received == total){
+		perror("ERROR storing complete response from socket");
+		exit(0);	
 	}
+
 	
 	/* close the socket */
 	close(sockfd);
