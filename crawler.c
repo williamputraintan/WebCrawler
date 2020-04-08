@@ -447,7 +447,7 @@ int status_response(char*response){
 
 void moved_site(char*response, char**extra_header){
 	char *location_str = strstr(response, "Location:");
-	char *location_str_end = strchr(location_str, '\n');
+	char *location_str_end = strchr(location_str, '\r');
 	int location_header_size = location_str_end - location_str;
     
     int extra_header_size = location_header_size + 1;
