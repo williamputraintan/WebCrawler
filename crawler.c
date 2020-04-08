@@ -286,7 +286,7 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 			} else if (url_type == 3) {
 				//Relative URL (implied protocol + host)
 				char *after_path = strrchr(current_url, '/');
-				int current_path_size = after_path - current_url;
+				int current_path_size = after_path - current_url + 1;
 				
 				int new_url_size = url_size + current_path_size + 1;
 				char * temp = malloc(url_size*sizeof(char));
