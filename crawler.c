@@ -25,7 +25,7 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count);
 int find_url_type(char *url);
 int is_eligible_url(char * old_url, char * new_url);
-int add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
+void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
 int status_response(char*response);
 void moved_site(char*response, char**moved_url);
 int check_content_type(char*response);
@@ -401,8 +401,11 @@ int is_eligible_url(char * old_url, char * new_url){
 	free(current_host);
 	return 0;
 }	
-
-int add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
+/*
+The function will add url found in the html response and add the url to the 
+url array list pass through the function. T
+*/
+void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
 	char *additional_header = calloc(1, sizeof(char));
 	char html_response[MAX_SIZE_RESPONSE+1];
 	printf("%s\n", url);
@@ -422,26 +425,34 @@ int add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* ur
 		http_get_html(html_response, moved_url, "");
 	}
 	if (check_content_type(html_response) == 0){
-		return 0;
+		return;
 	}	
 	free(additional_header);
 	if(*url_count < MAX_NUM_URL){
 		find_url(html_response, url, url_list, url_count);
 	}
-	return 1;
-//	printf("\nselese\n");
+
 }
+/*
+The function will find the status response code. It return the status repsonse 
+code number as an integer.
+*/
 int status_response(char*response){
+	//taking the first line of the response
 	char *end_first_line = strchr(response, '\n');
 	int size_first_line = end_first_line - response;
 	
+	//copying the status a char
 	char*status = malloc(sizeof(char)*size_first_line);
 	assert(status);
 	sscanf(response, "HTTP/1.1%[^\n]\n", status);
 	
+	//copying the response number to a string
 	char *status_number_char = calloc(4, sizeof(char));
 	assert(status_number_char);
 	strncpy(status_number_char,strchr(status, ' ')+1, 3);
+	
+	//converting the string into integer value
 	int status_number_int = atoi(status_number_char);
 	
 	free(status_number_char);
@@ -449,7 +460,10 @@ int status_response(char*response){
 	
 	return status_number_int;
 }
-
+/*
+The function will deal with 301 where the url are moved to another site.
+The function will locate the Location of the new site and copy to the moved_url char
+*/
 void moved_site(char*response, char**moved_url){
 	char *location_str = strstr(response, "Location:");
 	char *location_str_end = strchr(location_str, '\r');
@@ -462,13 +476,18 @@ void moved_site(char*response, char**moved_url){
 	strncpy(*moved_url, location_str, location_header_size);
 
 }
+
+/*
+The function will check if the the response have "Content-Type: text/html"
+returns 1 when it is true and false otherwise
+*/
 int check_content_type(char*response){
 	char comparison[] = "Content-Type: text/html";
 	int comparisen_len = strlen(comparison);
 	char *content_type_str = strstr(response, "Content-Type:");
 	if(strncmp(comparison,content_type_str, comparisen_len) == 0){
-		return 1;
+		return TRUE;
 	}
-	return 0;
+	return FALSE;
 			
 }
