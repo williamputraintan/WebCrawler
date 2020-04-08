@@ -180,7 +180,7 @@ void http_get_html(char *html_response, char *url, char*additional_header){
 	}
 */
 //	fprintf(stderr, "weh2\n");
-	fprintf(stderr, "%s\n", html_response);
+//	fprintf(stderr, "%s\n", html_response);
 	/* close the socket */
 	close(sockfd);
 	
