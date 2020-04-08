@@ -1,10 +1,14 @@
 CC=gcc
-CFLAGS=-I.
+CFLAGS= -Wall -g -I.
+DEPS = crawler.h
+OBJ = crawler.o crawlerfunc.o
 
-crawler: crawler.o
-	$(CC) -o crawler crawler.o -I.
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+crawler: $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
-	$(RM) server
 	$(RM) crawler.o
-
+	$(RM) crawlerfunc.o
