@@ -409,12 +409,16 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 	char html_response[MAX_SIZE_RESPONSE+1];
 	printf("%s\n", url);
 	http_get_html(html_response, url);
-	
-	if ( status_response(html_response) == 503 || status_response(html_response) == 504){
+	int response_number = status_response(html_response);
+	fprintf(stderr, "%s\n"html_response);
+	//This will try to refetch for the second time if the server response is on code 503, 504
+	//Code which starts with 5 is indicating is the server fault and can retry
+	//There might be a server overload
+	if ( response_number == 503 || response_number == 504){
 		  http_get_html(html_response, url);
-	} 
-		
-//	printf("\n\nskrng = %s\n", url);
+	}
+	
+	//other response
 	
 	if(*url_count < MAX_NUM_URL){
 		find_url(html_response, url, url_list, url_count);
