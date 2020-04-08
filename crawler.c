@@ -409,6 +409,7 @@ int add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* ur
 	http_get_html(html_response, url, additional_header);
 	
 	int response_num = status_response(html_response);
+	fprintf(stderr, "bangsat");
 	fprintf(stderr, "bener gk content type = %d\n", check_content_type(html_response));
 	if (check_content_type(html_response) == 0){
 		return 0;
