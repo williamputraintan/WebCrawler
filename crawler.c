@@ -409,11 +409,8 @@ int add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* ur
 	http_get_html(html_response, url, additional_header);
 	
 	int response_num = status_response(html_response);
-	fprintf(stderr, "bangsat");
-	fprintf(stderr, "bener gk content type = %d\n", check_content_type(html_response));
-	if (check_content_type(html_response) == 0){
-		return 0;
-	}
+
+
 	if (response_num == 503 || response_num == 504){
 		http_get_html(html_response, url, additional_header);
 	} else if ( response_num == 401) {
@@ -424,7 +421,9 @@ int add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* ur
 		char *moved_url = strchr(additional_header, ' ')+1;
 		http_get_html(html_response, moved_url, "");
 	}
-	
+	if (check_content_type(html_response) == 0){
+		return 0;
+	}	
 	free(additional_header);
 	if(*url_count < MAX_NUM_URL){
 		find_url(html_response, url, url_list, url_count);
@@ -464,7 +463,7 @@ void moved_site(char*response, char**moved_url){
 
 }
 int check_content_type(char*response){
-	char comparison[] = "Content-Type: text";
+	char comparison[] = "Content-Type: text/html";
 	int comparisen_len = strlen(comparison);
 	char *content_type_str = strstr(response, "Content-Type:");
 	if(strncmp(comparison,content_type_str, comparisen_len) == 0){
