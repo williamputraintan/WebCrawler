@@ -449,14 +449,13 @@ void moved_site(char*response, char**extra_header){
 	char *location_str = strstr(response, "Location:");
 	char *location_str_end = strchr(location_str, '\n');
 	int location_header_size = location_str_end - location_str;
-	printf("%d\n", location_header_size);
     
-    int extra_header_size = location_header_size + 9;
+    int extra_header_size = location_header_size + 1;
     
 	*extra_header = realloc(*extra_header, (sizeof(char)*extra_header_size));
     bzero(*extra_header, extra_header_size);
 	strncpy(*extra_header, location_str, location_header_size);
-	strcat(*extra_header, "/r/n");
+
 
 }
 
