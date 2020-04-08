@@ -142,7 +142,6 @@ void http_get_html(char *html_response, char *url, char*additional_header){
 		"%s"
 		"\r\n",
 		path, host, additional_header);
-	fprintf(stderr, "\n%s\n", request_message);
 
 	/* Translate host name into peer's IP address ;
 	 * This is name translation service by the operating system
@@ -197,25 +196,11 @@ void http_get_html(char *html_response, char *url, char*additional_header){
 
 
 	/* receive the response */
-	
-	received = 0;
-	do { 	
-		bytes = read(sockfd,html_response+received,total-received);
-		if (bytes < 0){
-			perror("ERROR reading from socket");
-			exit(0);
-		}
-		if (bytes == 0){
-			break;
-		}
-		received+=bytes;
-	} while (received < total);
-	
-	if (received == total){
-		perror("ERROR storing complete response from socket");
-		exit(0);	
+	bytes = read(sockfd,html_response,total);
+	if (bytes < 0){
+		perror("ERROR reading from socket");
+		exit(0);
 	}
-
 	
 	/* close the socket */
 	close(sockfd);
