@@ -27,7 +27,7 @@ int find_url_type(char *url);
 int is_eligible_url(char * old_url, char * new_url);
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
 int status_response(char*response);
-
+void moved_site(char*response, char**extra_header);
 
 /*Main Function of the program*/
 int main(int argc, char **argv)
@@ -414,6 +414,9 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 	} else if ( response_num == 401) {
 		char auth[] = "Authorization: Basic d2ludGFuOnBhc3N3b3Jk\r\n";
 		http_get_html(html_response, url, auth);
+	} else if  ( response_num == 301) {
+		moved_site(html_response, &additional_header);
+		http_get_html(html_response, url, additional_header);
 	}
 	
 	free(additional_header);
@@ -433,7 +436,6 @@ int status_response(char*response){
 	char *status_number_char = calloc(4, sizeof(char));
 	assert(status_number_char);
 	strncpy(status_number_char,strchr(status, ' ')+1, 3);
-	printf("hello =%s\n", status_number_char);
 	int status_number_int = atoi(status_number_char);
 	
 	free(status_number_char);
@@ -442,4 +444,18 @@ int status_response(char*response){
 	return status_number_int;
 }
 
+void moved_site(char*response, char**extra_header){
+	char *location_str = strstr(response, "Location:");
+	char *location_str_end = strchr(location_str, '\n');
+	int location_header_size = location_str_end - location_str;
+	printf("%d\n", location_header_size);
+    
+    int extra_header_size = location_header_size + 9;
+    
+	*extra_header = realloc(*extra_header, (sizeof(char)*extra_header_size));
+    bzero(*extra_header, extra_header_size);
+	strncpy(*extra_header, location_str, location_header_size);
+	strcat(*extra_header, "/r/n");
+
+}
 
