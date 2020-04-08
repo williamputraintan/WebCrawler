@@ -20,14 +20,13 @@
 #include <ctype.h>
 
 /*function prototype*/
-void http_get_html(char *html_response, char *url, char*additional_haeder);
+void http_get_html(char *html_response, char *url);
 void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL],  int *url_count);
 int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count);
 int find_url_type(char *url);
 int is_eligible_url(char * old_url, char * new_url);
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
-int status_response(char*response);
-void moved_site(char*response, char*extra_header);
+
 
 /*Main Function of the program*/
 int main(int argc, char **argv)
@@ -48,7 +47,7 @@ int main(int argc, char **argv)
 	for(int i = 0; i < url_count; i++){
 		curr_url = url_list[i];
 		add_hyperlink_from_url(url_list, &url_count, curr_url);
-//		fprintf(stderr, "url count = %d\n", url_count);
+//		printf("url count = %d\n", url_count);
 
 	}
 	
@@ -64,7 +63,7 @@ int main(int argc, char **argv)
 /*
 The function will get HTML code from the URL given and copy to the html_response string.
 */
-void http_get_html(char *html_response, char *url, char*additional_haeder){
+void http_get_html(char *html_response, char *url){
 	
 	struct hostent *server;
 	struct sockaddr_in serv_addr;
@@ -85,9 +84,8 @@ void http_get_html(char *html_response, char *url, char*additional_haeder){
 	message_size += strlen("GET /%s HTTP/1.1\r\n");
 	message_size += strlen("Host: %s\r\n");
 	message_size += strlen("User-Agent: wintan\r\n");
-	message_size += strlen("Content-Type: text/html; charset=UTF-8\r\n");
-	message_size += strlen(additional_haeder);
-	message_size += strlen("\r\n");
+	message_size += strlen("Content-Type: text/html; charset=UTF-8\r\n\r\n");
+	
 	/*Allocating space for message*/
 	request_message = malloc(sizeof(char)*message_size);
 	assert(request_message);
@@ -95,10 +93,8 @@ void http_get_html(char *html_response, char *url, char*additional_haeder){
 	sprintf(request_message, "GET /%s HTTP/1.1\r\n"
 		"Host: %s\r\n"
 		"User-Agent: wintan\r\n"
-		"Content-Type: text/html; charset=UTF-8\r\n"
-		"%s"
-		"\r\n",
-		path, host, additional_haeder);
+		"Content-Type: text/html; charset=UTF-8\r\n\r\n",
+		path, host);
 //	fprintf(stderr, "\n%s\n", request_message);
 
 	/* Translate host name into peer's IP address ;
@@ -149,42 +145,35 @@ void http_get_html(char *html_response, char *url, char*additional_haeder){
 		}
 		sent+=bytes;
 	} while (sent < total);
-	bzero(html_response, MAX_SIZE_RESPONSE);
-	/* receive the response */
 	total = MAX_SIZE_RESPONSE-1;
-	received = 0;
-	
-	bytes = read(sockfd,html_response+received,total-received);
-
+	bzero(html_response, MAX_SIZE_RESPONSE);
+	bytes = read(sockfd,html_response,);
 	if (bytes < 0){
 		perror("ERROR reading from socket");
 		exit(0);
 	}
-
-	
-	
-/*	do { 
+//	fprintf(stderr, "weh1\n");
+	/* receive the response */
+/*	
+	received = 0;
+	do { 	
 		bytes = read(sockfd,html_response+received,total-received);
-
 		if (bytes < 0){
 			perror("ERROR reading from socket");
 			exit(0);
 		}
-
 		if (bytes == 0){
 			break;
-		}                                
-
+		}
 		received+=bytes;
-
 	} while (received < total);
-
-
+	
 	if (received == total){
 		perror("ERROR storing complete response from socket");
 		exit(0);	
 	}
-*/	
+*/
+//	fprintf(stderr, "weh2\n");
 //	fprintf(stderr, "%s\n", html_response);
 	/* close the socket */
 	close(sockfd);
@@ -408,38 +397,11 @@ int is_eligible_url(char * old_url, char * new_url){
 }	
 
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
-	char *additional_header = malloc(sizeof(char));
+	
 	char html_response[MAX_SIZE_RESPONSE+1];
 	printf("%s\n", url);
-	http_get_html(html_response, url, additional_header);
-	int response_number = status_response(html_response);
-	fprintf(stderr, "%s\n", html_response);
+	http_get_html(html_response, url);
 	
-	
-	
-	//This will try to refetch for the second time if the server response is on code 503, 504
-	//Code which starts with 5 is indicating is the server fault and can retry
-	//There might be a server overload
-	if ( response_number == 503 || response_number == 504){
-		  http_get_html(html_response, url, additional_header);
-	}
-	if ( response_number == 401){
-		int additional_header_size = strlen("Authorization: Basic d2ludGFuOnBhc3N3b3Jk\r\n");
-		
-		additional_header = realloc(additional_header, sizeof(char)*additional_header_size);
-		strcpy(additional_header, "Authorization: Basic d2ludGFuOnBhc3N3b3Jk\r\n");
-		
-		http_get_html(html_response, url, additional_header);
-	}
-	if ( response_number == 301){
-		
-		moved_site(html_response, additional_header);
-		http_get_html(html_response, url, additional_header);
-		
-	}
-	
-	free(additional_header);
-	//other response
 	
 	if(*url_count < MAX_NUM_URL){
 		find_url(html_response, url, url_list, url_count);
@@ -448,37 +410,5 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 
 
 }
-/*
-This function will take the html response, and return the response code at the 
-top of the line,
-*/
-int status_response(char*response){
-	char *end_first_line = strchr(response, '\n');
-	int size_first_line = end_first_line - response;
-	
-	char*status = malloc(sizeof(char)*size_first_line);
-	assert(status);
-	sscanf(response, "HTTP/1.1%[^\n]\n", status);
-	
-	char *status_number_char = malloc(sizeof(char)*4);
-	assert(status_number_char);
-	strncpy(status_number_char,strchr(status, ' ')+1, 3);
-	
-	int status_number_int = atoi(status_number_char);
-	
-	free(status_number_char);
-	free(status);
-	
-	return status_number_int;
-}
 
-void moved_site(char*response, char*extra_header){
-	char *location_str = strstr(response, "Location:");
-	char *location_str_end = strchr(response, '\n');
-	int location_header_size = location_str_end - location_str;
-	
-	extra_header = realloc(extra_header, sizeof(char)*location_header_size+3);
-	strncpy(extra_header, location_str, location_header_size);
-	strcat(extra_header, "/r/n");
 
-}
