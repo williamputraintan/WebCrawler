@@ -45,15 +45,14 @@ int main(int argc, char **argv)
 	int url_count = 0;
 	char *curr_url = argv[1];
 	add_new_url(curr_url, url_list, &url_count);
-//	fprintf(stderr, "CURRENT URL = %s\n", curr_url);
+
+	//Will go through the every url on the url_list array
 	for(int i = 0; i < url_count; i++){
 		curr_url = url_list[i];
 		add_hyperlink_from_url(url_list, &url_count, curr_url);
-//		printf("url count = %d\n", url_count);
-
 	}
 	
-	//free memory allocated
+	//free memory allocated on the pointers array
 	for (int i = 0; i < url_count; i++){
 		free(url_list[i]);
 	}
@@ -153,34 +152,15 @@ void http_get_html(char *html_response, char *url, char*additional_header){
 	} while (sent < total);
 	total = MAX_SIZE_RESPONSE-1;
 	bzero(html_response, MAX_SIZE_RESPONSE);
+
+
+	/* receive the response */
 	bytes = read(sockfd,html_response,total);
 	if (bytes < 0){
 		perror("ERROR reading from socket");
 		exit(0);
 	}
-//	fprintf(stderr, "weh1\n");
-	/* receive the response */
-/*	
-	received = 0;
-	do { 	
-		bytes = read(sockfd,html_response+received,total-received);
-		if (bytes < 0){
-			perror("ERROR reading from socket");
-			exit(0);
-		}
-		if (bytes == 0){
-			break;
-		}
-		received+=bytes;
-	} while (received < total);
 	
-	if (received == total){
-		perror("ERROR storing complete response from socket");
-		exit(0);	
-	}
-*/
-//	fprintf(stderr, "weh2\n");
-	fprintf(stderr, "%s\n", html_response);
 	/* close the socket */
 	close(sockfd);
 	
@@ -191,7 +171,8 @@ void http_get_html(char *html_response, char *url, char*additional_header){
 }
 
 /*
-The function will copy the all available valid link and copy it to the list.
+The function will copy the all available valid hyperlink and copy it to the list
+of array.
 */
 void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL],  int *url_count)
 {
@@ -200,6 +181,7 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 	int is_an_a_tag = 0;
 	char *html_tag;
 	char *url = malloc(sizeof(char));
+	
 	for(int i = 0; i < strlen(html_response)-1; i++){
 		//skip index if its not a opening/closing tag
 		if (html_response[i] != '<' && html_response[i] != '>'){
@@ -245,55 +227,66 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 			assert(url);
 			bzero(url, url_size);	
 			strncpy(url, href_link_start, (url_size-1));
-//			sscanf(href_link_start, "\"%[^\"]\"", url); 
-//			fprintf(stderr, "url found = %s\n", url);
+
 			//checking if it acceptable host
 			int url_type = find_url_type(url);
 			
+			// Relative URL (implied protocol)
 			if (url_type == 1) {
-				// Relative URL (implied protocol)
 				
+				//indicating where the hostname starts
 				char *after_protocol = strstr(current_url, "//");
 				int current_protcol_size = after_protocol - current_url;
 				
+				//resize the url according to its size
 				int new_url_size = url_size + current_protcol_size + 1;
 				char * temp = malloc(url_size*sizeof(char));
 				assert(url);
 				strcpy(temp, url);
 				
+				//Replacing the relative url to absolute url
 				url = realloc(url, sizeof(char)*new_url_size);
 				bzero(url, new_url_size);
 				strncpy(url, current_url, current_protcol_size);
 				strcat(url, temp);
 				
 				free(temp);
+				
+			//Relative URL (implied protocol + host)
 			} else if (url_type == 2) {
-				//Relative URL (implied protocol + host)
+				
+				//indicate where the path starts
 				char *after_protocol = strstr(current_url, "//")+2;
 				char *after_host = strchr(after_protocol, '/');
 				int current_host_size = after_host - current_url;
-
+				
+				//resizing the url char size
 				int new_url_size = url_size + current_host_size + 1;
 				char * temp = malloc(url_size*sizeof(char));
 				assert(url);
 				strcpy(temp, url);
 
+				//Replacing the relative url to absolute url
 				url = realloc(url, sizeof(char)*new_url_size);
 				bzero(url, new_url_size);
 				strncpy(url, current_url, current_host_size);
 				strcat(url, temp);
 				
 				free(temp);
+				
+			// Relative URL (implied protocol + host + path)
 			} else if (url_type == 3) {
-				//Relative URL (implied protocol + host)
+				//indicate where the file path starts
 				char *after_path = strrchr(current_url, '/');
 				int current_path_size = after_path - current_url + 1;
 				
+				//resize the url char size
 				int new_url_size = url_size + current_path_size + 1;
 				char * temp = malloc(url_size*sizeof(char));
 				assert(temp);
 				strcpy(temp, url);
 				
+				//Replacing the relative url to absolute url
 				url = realloc(url, sizeof(char)*new_url_size);
 				assert(url);
 				bzero(url, new_url_size);
@@ -303,11 +296,13 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 				free(temp);
 			}
 
+			//Will check if the url found have the same second component hostname
+			//if true will add the url to the url array
 			if (is_eligible_url(current_url, url) == TRUE){
-				fprintf(stderr, "url add = %s\n", url);
 				add_new_url(url, url_list, url_count);
 			}
 			
+			//if url found have reach MAX_NUM_URL it will break the loop
 			if (*url_count == MAX_NUM_URL){
 				break;
 			}
@@ -379,60 +374,79 @@ int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count){
 
 /*
 The function will check if the url will check if the url have the same 
-second component host. Will return 1 if its the same and 0 otherwise.
+second component host. 
+Return: 1 - True
+		0 - False.
 */
 int is_eligible_url(char * old_url, char * new_url){
-//	printf("\n\nurl ny = %s\n", new_url);
+	
+	//will parse the hostname of the new url
 	char *current_host = calloc(strlen(old_url), sizeof(char));
 	assert(current_host);
 	sscanf(old_url, "http://%[^/]/", current_host);
 
-	//Will assign the variable below to point after the first " . "
+	//Will assign pointer variable after the first " . " at the hostname	
 	char *component_cur_host = strchr(current_host, '.') + 1;
 	char *component_new_host = strchr(new_url, '.') + 1;
-//	printf("lama= %s\nbru = %s\n", component_cur_host, component_new_host);
+
 	int size_host_compare = strlen(component_cur_host);
 	
+	//Will compare both url's at second component of the hostname if are the same
 	if (strncmp(component_cur_host, component_new_host, size_host_compare) == 0)
 	{
 		free(current_host);
 		return 1;
 	}
+	
 	free(current_host);
 	return 0;
 }	
 /*
 The function will add url found in the html response and add the url to the 
-url array list pass through the function. T
+url array list pass through the function. 
+The function will also handle 503, 504, 401, 301 status code response.
 */
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
+	//Getting the html response from the current url 
 	char *additional_header = calloc(1, sizeof(char));
 	char html_response[MAX_SIZE_RESPONSE+1];
 	printf("%s\n", url);
 	http_get_html(html_response, url, additional_header);
 	
+	//It will identify the response code and take the appropriate responses
 	int response_num = status_response(html_response);
-
-
+	
+	//trying to refetch when receiving 503 ann 504 response
 	if (response_num == 503 || response_num == 504){
 		http_get_html(html_response, url, additional_header);
+		
+	//refetch the url with authentication
 	} else if ( response_num == 401) {
 		char auth[] = "Authorization: Basic d2ludGFuOnBhc3N3b3Jk\r\n";
 		http_get_html(html_response, url, auth);
+		
+	//refetch the url with the new url
 	} else if  ( response_num == 301) {
 		moved_site(html_response, &additional_header);
 		char *moved_url = strchr(additional_header, ' ')+1;
 		http_get_html(html_response, moved_url, "");
 	}
+	
+	//Will check if the response in in text/html format and will terminate the 
+	//function if it is the wrong format
 	if (check_content_type(html_response) == 0){
 		return;
 	}	
 	free(additional_header);
+	
+	//Will search url's from the HTML response and add the URL to the array list
+	//if the url found have not reach the MAX_NUM_URL
 	if(*url_count < MAX_NUM_URL){
 		find_url(html_response, url, url_list, url_count);
 	}
 
 }
+
 /*
 The function will find the status response code. It return the status repsonse 
 code number as an integer.
@@ -479,15 +493,16 @@ void moved_site(char*response, char**moved_url){
 
 /*
 The function will check if the the response have "Content-Type: text/html"
-returns 1 when it is true and false otherwise
+Return: 1 - true 
+		0 - false
 */
 int check_content_type(char*response){
 	char comparison[] = "Content-Type: text/html";
 	int comparisen_len = strlen(comparison);
 	char *content_type_str = strstr(response, "Content-Type:");
 	if(strncmp(comparison,content_type_str, comparisen_len) == 0){
-		return TRUE;
+		return 1;
 	}
-	return FALSE;
+	return 0;
 			
 }
