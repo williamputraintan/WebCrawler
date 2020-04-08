@@ -410,7 +410,7 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 	printf("%s\n", url);
 	http_get_html(html_response, url);
 	int response_number = status_response(html_response);
-	fprintf(stderr, "%s\n"html_response);
+	fprintf(stderr, "%s\n", html_response);
 	//This will try to refetch for the second time if the server response is on code 503, 504
 	//Code which starts with 5 is indicating is the server fault and can retry
 	//There might be a server overload
