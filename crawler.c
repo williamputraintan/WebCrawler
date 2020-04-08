@@ -20,12 +20,13 @@
 #include <ctype.h>
 
 /*function prototype*/
-void http_get_html(char *html_response, char *url);
+void http_get_html(char *html_response, char *url, char*additional_header);
 void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL],  int *url_count);
 int add_new_url(char *new_url, char *url_list[MAX_NUM_URL], int*url_count);
 int find_url_type(char *url);
 int is_eligible_url(char * old_url, char * new_url);
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
+int status_response(char*response);
 
 
 /*Main Function of the program*/
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
 /*
 The function will get HTML code from the URL given and copy to the html_response string.
 */
-void http_get_html(char *html_response, char *url){
+void http_get_html(char *html_response, char *url, char*additional_header){
 	
 	struct hostent *server;
 	struct sockaddr_in serv_addr;
@@ -84,7 +85,9 @@ void http_get_html(char *html_response, char *url){
 	message_size += strlen("GET /%s HTTP/1.1\r\n");
 	message_size += strlen("Host: %s\r\n");
 	message_size += strlen("User-Agent: wintan\r\n");
-	message_size += strlen("Content-Type: text/html; charset=UTF-8\r\n\r\n");
+	message_size += strlen("Content-Type: text/html; charset=UTF-8\r\n");
+	message_size += strlen(additional_header);
+	message_size += strlen("\r\n");
 	
 	/*Allocating space for message*/
 	request_message = malloc(sizeof(char)*message_size);
@@ -93,8 +96,10 @@ void http_get_html(char *html_response, char *url){
 	sprintf(request_message, "GET /%s HTTP/1.1\r\n"
 		"Host: %s\r\n"
 		"User-Agent: wintan\r\n"
-		"Content-Type: text/html; charset=UTF-8\r\n\r\n",
-		path, host);
+		"Content-Type: text/html; charset=UTF-8\r\n"
+		"%s"
+		"\r\n",
+		path, host, additional_header);
 //	fprintf(stderr, "\n%s\n", request_message);
 
 	/* Translate host name into peer's IP address ;
@@ -147,7 +152,7 @@ void http_get_html(char *html_response, char *url){
 	} while (sent < total);
 	total = MAX_SIZE_RESPONSE-1;
 	bzero(html_response, MAX_SIZE_RESPONSE);
-	bytes = read(sockfd,html_response,);
+	bytes = read(sockfd,html_response,total);
 	if (bytes < 0){
 		perror("ERROR reading from socket");
 		exit(0);
@@ -397,18 +402,44 @@ int is_eligible_url(char * old_url, char * new_url){
 }	
 
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url){
-	
+	char *additional_header = calloc(1, sizeof(char));
 	char html_response[MAX_SIZE_RESPONSE+1];
 	printf("%s\n", url);
-	http_get_html(html_response, url);
+	http_get_html(html_response, url, additional_header);
 	
+	int response_num = status_response(html_response);
 	
+	if (response_num == 503 || response_num == 504){
+		http_get_html(html_response, url, additional_header);
+	} else if ( response_num == 401) {
+		char auth[] = "Authorization: Basic d2ludGFuOnBhc3N3b3Jk\r\n";
+		http_get_html(html_response, url, auth);
+	}
+	
+	free(additional_header);
 	if(*url_count < MAX_NUM_URL){
 		find_url(html_response, url, url_list, url_count);
 	}
 //	printf("\nselese\n");
-
-
+}
+int status_response(char*response){
+	char *end_first_line = strchr(response, '\n');
+	int size_first_line = end_first_line - response;
+	
+	char*status = malloc(sizeof(char)*size_first_line);
+	assert(status);
+	sscanf(response, "HTTP/1.1%[^\n]\n", status);
+	
+	char *status_number_char = calloc(4, sizeof(char));
+	assert(status_number_char);
+	strncpy(status_number_char,strchr(status, ' ')+1, 3);
+	printf("hello =%s\n", status_number_char);
+	int status_number_int = atoi(status_number_char);
+	
+	free(status_number_char);
+	free(status);
+	
+	return status_number_int;
 }
 
 
