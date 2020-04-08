@@ -27,6 +27,8 @@ int main(int argc, char **argv)
 	//Will go through the every url on the url_list array
 	for(int i = 0; i < url_count; i++){
 		curr_url = url_list[i];
+		
+		//Add hyperlink to the array list found in each url response
 		add_hyperlink_from_url(url_list, &url_count, curr_url);
 	}
 	
