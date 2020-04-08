@@ -27,7 +27,7 @@ int find_url_type(char *url);
 int is_eligible_url(char * old_url, char * new_url);
 void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* url);
 int status_response(char*response);
-void moved_site(char*response, char**extra_header);
+void moved_site(char*response, char**moved_url);
 
 /*Main Function of the program*/
 int main(int argc, char **argv)
@@ -303,7 +303,7 @@ void find_url(char *html_response, char *current_url, char *url_list[MAX_NUM_URL
 			}
 
 			if (is_eligible_url(current_url, url) == TRUE){
-//				fprintf(stderr, "url add = %s\n", url);
+				fprintf(stderr, "url add = %s\n", url);
 				add_new_url(url, url_list, url_count);
 			}
 			
@@ -445,19 +445,16 @@ int status_response(char*response){
 	return status_number_int;
 }
 
-void moved_site(char*response, char**extra_header){
+void moved_site(char*response, char**moved_url){
 	char *location_str = strstr(response, "Location:");
 	char *location_str_end = strchr(location_str, '\r');
 	int location_header_size = location_str_end - location_str;
     
-    int extra_header_size = location_header_size + 1;
+    int moved_url_size = location_header_size + 1;
     
-	*extra_header = realloc(*extra_header, (sizeof(char)*extra_header_size));
-    bzero(*extra_header, extra_header_size);
-	strncpy(*extra_header, location_str, location_header_size);
-	
-	fprintf(stderr, "\"%s\"", *extra_header);
-
+	*moved_url = realloc(*moved_url, (sizeof(char)*moved_url_size));
+    bzero(*moved_url, moved_url_size);
+	strncpy(*moved_url, location_str, location_header_size);
 
 }
 
