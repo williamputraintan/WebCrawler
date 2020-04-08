@@ -455,6 +455,8 @@ void moved_site(char*response, char**extra_header){
 	*extra_header = realloc(*extra_header, (sizeof(char)*extra_header_size));
     bzero(*extra_header, extra_header_size);
 	strncpy(*extra_header, location_str, location_header_size);
+	
+	fprintf(stderr, "\"%s\"", *extra_header);
 
 
 }
