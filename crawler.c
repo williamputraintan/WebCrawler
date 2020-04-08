@@ -418,9 +418,8 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 		  http_get_html(html_response, url);
 	}
 	if ( response_number == 401){
-			  auth_func(html_response, url);
-		}
-	auth_func
+		auth_func(html_response, url);
+	}
 	
 	//other response
 	
