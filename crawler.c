@@ -410,11 +410,11 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 	printf("%s\n", url);
 	http_get_html(html_response, url);
 	
-	if ( status_response(html_response) == 503 && status_response(html_response) == 504){
+	if ( status_response(html_response) == 503 || status_response(html_response) == 504){
 		  http_get_html(html_response, url);
 	} 
 		
-		
+//	printf("\n\nskrng = %s\n", url);
 	
 	if(*url_count < MAX_NUM_URL){
 		find_url(html_response, url, url_list, url_count);
@@ -423,21 +423,27 @@ void add_hyperlink_from_url(char *url_list[MAX_NUM_URL], int *url_count, char* u
 
 
 }
-
+/*
+This function will take the html response, and return the response code at the 
+top of the line,
+*/
 int status_response(char*response){
 	char *end_first_line = strchr(response, '\n');
 	int size_first_line = end_first_line - response;
 	
 	char*status = malloc(sizeof(char)*size_first_line);
+	assert(status);
 	sscanf(response, "HTTP/1.1%[^\n]\n", status);
 	
 	char *status_number_char = malloc(sizeof(char)*4);
+	assert(status_number_char);
 	strncpy(status_number_char,strchr(status, ' ')+1, 3);
 	
 	int status_number_int = atoi(status_number_char);
 	
 	free(status_number_char);
 	free(status);
+	
 	return status_number_int;
 }
 
