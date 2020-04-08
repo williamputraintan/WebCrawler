@@ -100,7 +100,7 @@ void http_get_html(char *html_response, char *url, char*additional_header){
 		"%s"
 		"\r\n",
 		path, host, additional_header);
-//	fprintf(stderr, "\n%s\n", request_message);
+	fprintf(stderr, "\n%s\n", request_message);
 
 	/* Translate host name into peer's IP address ;
 	 * This is name translation service by the operating system
@@ -179,7 +179,7 @@ void http_get_html(char *html_response, char *url, char*additional_header){
 	}
 */
 //	fprintf(stderr, "weh2\n");
-//	fprintf(stderr, "%s\n", html_response);
+	fprintf(stderr, "%s\n", html_response);
 	/* close the socket */
 	close(sockfd);
 	
