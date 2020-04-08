@@ -3,7 +3,7 @@
 #define TRUE				1
 #define FALSE 				0
 #define MAX_NUM_URL			100		
-#define ERROR_STATUS		0
+
 
 /*Include files*/
 #define _GNU_SOURCE
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 	//error when no URL provided
 	if (argc < 2) {
 		fprintf(stderr,"ERROR, no URL provided\n");
-		exit(ERROR_STATUS);
+		exit(1);
 	}
 
 	//intialize
