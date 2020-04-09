@@ -10,5 +10,6 @@ crawler: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
+	$(RM) crawler
 	$(RM) crawler.o
 	$(RM) crawlerfunc.o
